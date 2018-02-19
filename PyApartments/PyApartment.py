@@ -13,9 +13,9 @@ baseURL = "https://www.apartments.com/"
 def formatURL(**kwargs):
     """Formats a URL extension for apartments.com queries.
     kwargs:
-    bathrooms: int number of bathrooms (0 - 3, 3 includes 4, 5, 6...)
+    bathrooms: Integer number of bathrooms (1 - 3, 3 includes 4, 5, 6...)
     bedrooms: int/string number of bedrooms ("studio", 1 - 4, 4 includes 5, 6, 7...)
-    
+    city: String city name
     """
     if "state" not in kwargs:
         raise NoStateException("Please provide a state in the USA.")
