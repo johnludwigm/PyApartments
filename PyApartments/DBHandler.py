@@ -8,6 +8,10 @@ Base = declarative_base()
 class Listing(Base):
     """SQL table to store scraped data."""
     __tablename__ = "Listing"
+
+    accessed = Column(DateTime)
+    rent = Column(Integer)
+    rating = Column(Integer)
     
     
     
