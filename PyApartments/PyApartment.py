@@ -161,6 +161,7 @@ def get_images(soup):
     # find ul with id fullCarouselCollection
     soup = soup.find('ul', {'id': 'fullCarouselCollection'})
     if soup is not None:
+        #This is markdown.
         return " ".join(f"![{imgtag['alt']}]({imgtag['src']})"
                         for imgtag in soup.find_all("img"))
 
@@ -259,66 +260,53 @@ def get_fees(soup):
     fields['monthFees'] = fields['monthFees'].strip()
     fields['onceFees'] = fields['onceFees'].strip()
 
-
-def get_property_name(soup):
-    """Get name of the property."""
-    obj = soup.find('h1', {"class": "propertyName"})
-    if obj is not None:
-        name = prettify_text(obj.getText())
-        return name
+propertynameattrs = {"itemprop": "name", "content": True}
+def getpropertyname(articletag):
+    """Return name of the property."""
+    tag = articletag.find("meta", attrs=propertynameattrs)
+    return cleantext(tag["content"])
 
 from collections import namedtuple
-def get_property_address(soup):
+
+addressattrs = {"itemprop": "streetAddress", "content": True}
+cityattrs = {"itemprop": "addressLocality", "content": True}
+regionattrs = {"itemprop": "addressRegion", "content": True}
+zipcodeattrs = {"itemprop": "postalCode", "content": True}
+def get_property_address(articletag):
     """Get full address of the property."""
+    addresstag = articletag.find("meta", attrs=addressattrs)
+    address = cleantext(addresstag["content"])
 
-    # create the address from parts connected by comma (except zip code)
-    address = []
-    addresstag = soup.find("meta", {"itemprop": "streetAddress",
-                                    "content": True})
-    address = addresstag["content"]
-    if address is None:
-        return None
-
-    citytag = soup.find("meta", {"itemprop": "addressLocality",
-                                 "content": True})
-    city = citytag["content"]
+    citytag = articletag.find("meta", attrs=cityattrs)
+    city = cleantext(citytag["content"])
     
-    regiontag = soup.find("meta", {"itemprop": "addressRegion",
-                                   "content": True})
-    state = regiontag["content"]
+    regiontag = articletag.find("meta", attrs=regionattrs)
+    state = cleantext(regiontag["content"])
 
-    zipcodetag = soup.find("meta", {"itemprop": "postalCode",
-                                    "content": True})
-    zipcode = zipcodetag["content"]
-    #return (
+    zipcodetag = articletag.find("meta", attrs=zipcodeattrs)
+    zipcode = cleantext(zipcodetag["content"])
+    return (address, city, state, zipcode)
 
-def create_csv(page_url, map_info, fname, pscores):
-    try:
-        writer = csv.writer(csv_file)
-        header = ['Option Name', 'Contact', 'Address', 'Size',
-                  'Rent', 'Monthly Fees', 'One Time Fees',
-                  'Pet Policy', 'Distance', 'Duration',
-                  'Parking', 'Gym', 'Kitchen',
-                  'Amenities', 'Features', 'Living Space',
-                  'Lease Info', 'Services',
-                  'Property Info', 'Indoor Info', 'Outdoor Info',
-                  'Images', 'Description']
-        # add the score fields if necessary
-        if pscores:
-            for i in range(len(header), 0, -1):
-                header.insert(i, 5)
-            # flag that we're importing with scores
-            header[1] = 'score'
-            header.append('modifier')
 
-def write_parsed_to_csv(page_url, map_info, writer, pscores):
+urlattrs = {"class": True, "href": True, "title": True}
+def getpropertyurl(articletag):
+    tag = articletag.find("a", attrs=urlattrs)
+    return cleantext(tag["href"])
+
+
+header = ('Option Name', 'Contact', 'Address', 'Size',
+          'Rent', 'Monthly Fees', 'One Time Fees',
+          'Pet Policy', 'Distance', 'Duration',
+          'Parking', 'Gym', 'Kitchen', 'Amenities',
+          'Features', 'Living Space', 'Lease Info', 'Services',
+          'Property Info', 'Indoor Info', 'Outdoor Info',
+          'Images', 'Description')
+
+
+def getallinfo(page_url, map_info, writer, pscores):
     """Given the current page URL, extract the information from each apartment in the list"""
 
-    soup = BeautifulSoup(page.content, 'html.parser')
-    soup.prettify()
-    # only look in this region
-    soup = soup.find('div', class_='placardContainer')
-
+    soup = BS(page.text, 'html.parser')
     # append the current apartments to the list
     for item in soup.find_all('article', class_='placard'):
         url = ''
@@ -375,3 +363,15 @@ def write_parsed_to_csv(page_url, map_info, writer, pscores):
     # recurse until the last page
     if next_url is not None and next_url != 'javascript:void(0)':
         write_parsed_to_csv(next_url, map_info, writer, pscores)
+
+
+def getlastpagenum(soup):
+    """Gets last page from results."""
+    #The footer of the results page lists pages containing at most 25
+    #results each. So at the bottom of the landing page for a search that
+    #would get 126 results, it would say <1 2 3 ... 6>. 25 results on each
+    #of pages 1 (current), 2, 3, 4, and 5, but 1 result on page 6.
+
+    result = soup.select("li div a")    
+    return max(int(tag["data-page"]) for tag in result
+               if not tag.has_attr("class"))
