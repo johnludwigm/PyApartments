@@ -6,6 +6,8 @@ from html import unescape
 def cleantext(text):
     """Returns stripped, unescaped text."""
     return unescape(text).strip()
+
+
 baseURL = "https://www.apartments.com/"
 descriptors = ("bathrooms",
                "bedrooms", 
@@ -13,60 +15,6 @@ descriptors = ("bathrooms",
                "maxprice",
                "minprice",
                "state")
-
-#Start with cities, then we can make the search more specific
-#in version 2.0
-'''
-pageattrs = {"data-listingid": True}
-def formatbedroom(bedroom):
-    """Returns bedroom type for URL query.
-    :param bedroom: String or Integer."""
-    if isinstance(bedroom, int):
-        if bedroom <= 1:
-            return 1
-        elif bedroom >= 3:
-            return 3
-        return bedroom
-    elif bedroom == "studios":
-        return "studios"
-    return None
-
-
-def formatcost(minprice, maxprice):
-    """Returns cost formatted for URL query.
-    :param minprice: Minimum desired rent.
-    :param maxprice: Maximum desired rent."""
-    #I leave it to the user to give sensible min and max prices.
-    if minprice is None:
-        if maxprice is not None:
-            if maxprice < 400:
-                return "under-400"
-            elif maxprice > 400:
-                return f"under-{maxprice}"
-            #If we're at THIS point, then someone gave a negative maxprice!
-            return None
-    elif maxprice is None:
-        if minprice < 400:
-            return "over-400"
-        elif minprice > 400:
-            return f"over-{minprice}"
-        return None
-    return f"{minprice}-to-{maxprice}"
-'''
-def formatURL(**kwargs):
-    """Formats a URL extension for apartments.com queries.
-    :param bathrooms: Integer min number of bathrooms (1 - 3; 3 = 3+)
-    :param bedrooms: Integer or String, number of bedrooms
-    ("studio" or 1 - 4; 4 = 4+)
-    :param city: String city name
-    :param maxprice: Integer max price
-    :param minprice: Integer min price
-    :param state: String state abbreviation ("TX" good, "Texas" bad)
-    """
-    if "state" not in kwargs:
-        raise NoStateException("Please provide a state in the USA.")
-    
-    specs = {key: kwargs.get(key, default=None) for key in descriptors}
 
 
 class PyApartment(object):
@@ -90,9 +38,7 @@ class PyApartment(object):
         self.soup = BS(self.get(url), "html.parser")
         if self.soup is None:
             return None
-        else:
-            for function in ...:
-                pass        
+               
 
 
     def get(self, url, html=True, content=False):
@@ -338,21 +284,12 @@ def getphonenumber(articletag):
     else:
         return cleantext(span[0].text)
 
-header = ('Address', 'Size',
-          'Rent', 'Monthly Fees', 'One Time Fees',
-          'Pet Policy', 'Distance', 'Duration',
-          'Parking', 'Gym', 'Kitchen', 'Amenities',
-          'Features', 'Living Space', 'Lease Info', 'Services',
-          , 'Indoor Info', 'Outdoor Info',
-    
-
-def getallinfo():
+def iterproperties():
     """Get info from each property on the results pages."""
 
     soup = BS(page.text, 'html.parser')
     for item in soup.find_all('article', class_='placard'):
         
-
         
 def getlastpagenum(searchresultsoup):
     """Gets last page from results."""

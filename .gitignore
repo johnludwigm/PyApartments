@@ -8,6 +8,7 @@ __pycache__/
 
 # Distribution / packaging
 .DS_Store
+.unused.py
 .Python
 env/
 build/
