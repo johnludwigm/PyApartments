@@ -60,15 +60,17 @@ class PyApartment(object):
             return result.content
 
 
-    def getpropertyinfo(self, propertysoup):
-        """"""
-          
-        property = getpropertyname(soup)
-    # get the address of the property
+    def getpropertyinfo(self, propertysoup, timestamp=True):
+        """Returns property information given a property page.
+        :param timestamp: Boolean, if True, then the property information
+        will be updated with current information and timestamped.
+        """
+        
+        prop = getpropertyname(soup)
+        # get the address of the property
     getpropertyaddress(soup)
     # get the size of the property
     get_property_size(soup)
-    # get the one time and monthly fees
     getallfees(propertysoup)
     # get the images as a list
     #get_images(soup)
@@ -239,7 +241,8 @@ propertynameattrs = {"itemprop": "name", "content": True}
 def getpropertyname(articletag):
     """Return name of the property."""
     tag = articletag.find("meta", attrs=propertynameattrs)
-    return cleantext(tag["content"])
+    name = cleantext(tag["content"])
+    return name if name != "" else None
 
 
 addressattrs = {"itemprop": "streetAddress", "content": True}
