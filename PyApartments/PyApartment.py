@@ -1,4 +1,4 @@
-
+import DBHandler
 from bs4 import BeautifulSoup as BS
 import requests
 from html import unescape
@@ -6,7 +6,7 @@ from html import unescape
 def cleantext(text):
     """Returns stripped, unescaped text."""
     return unescape(text).strip()
-
+baseURL = "https://www.apartments.com/"
 descriptors = ("bathrooms",
                "bedrooms", 
                "city",
@@ -14,8 +14,9 @@ descriptors = ("bathrooms",
                "minprice",
                "state")
 
-baseURL = "https://www.apartments.com/"
-
+#Start with cities, then we can make the search more specific
+#in version 2.0
+'''
 pageattrs = {"data-listingid": True}
 def formatbedroom(bedroom):
     """Returns bedroom type for URL query.
@@ -29,6 +30,7 @@ def formatbedroom(bedroom):
     elif bedroom == "studios":
         return "studios"
     return None
+
 
 def formatcost(minprice, maxprice):
     """Returns cost formatted for URL query.
@@ -50,7 +52,7 @@ def formatcost(minprice, maxprice):
             return f"over-{minprice}"
         return None
     return f"{minprice}-to-{maxprice}"
-
+'''
 def formatURL(**kwargs):
     """Formats a URL extension for apartments.com queries.
     :param bathrooms: Integer min number of bathrooms (1 - 3; 3 = 3+)
@@ -65,8 +67,8 @@ def formatURL(**kwargs):
         raise NoStateException("Please provide a state in the USA.")
     
     specs = {key: kwargs.get(key, default=None) for key in descriptors}
-    
-    
+
+
 class PyApartment(object):
     
     def __init__(self, url=None, session=None):
@@ -112,10 +114,10 @@ class PyApartment(object):
             return result.content
 
 
-    def getinfo(self):
-        """Apply to an article."""
-    # get the name of the property
-    getpropertyname(soup)
+    def getpropertyinfo(self, propertysoup):
+        """"""
+          
+        property = getpropertyname(soup)
     # get the address of the property
     getpropertyaddress(soup)
     # get the size of the property
@@ -132,7 +134,17 @@ class PyApartment(object):
     get_parking_info(soup, fields)
     # get the 'property information'
     get_features_and_info(soup)
-    
+
+
+    def getlistings(self, propertysoup, propertytable):
+        """Generator yielding SQLAlchemy Listing objects.
+        :param propertysoup: bs4.BeautifulSoup for the property page
+        :param propertytable: SQLAlchemy Property record.
+        """
+        listings = soup.find_all("tr", {"class": ["rentalGridRow", "hideOnCollapsed", ""]})
+        
+        
+
 
 #######################################
 #Apply to the results page of a search#
@@ -198,6 +210,17 @@ def getallfees(propertysoup):
             "monthlyfees": getfees(monthlyfees_tag)}
 
 
+
+
+
+def getlistings(propertysoup):
+    """Generator yielding SQLAlchemy Listing objects.
+    :param propertysoup: bs4.BeautifulSoup for the property page
+    :param propertytable: SQLAlchemy Property record.
+    """
+    
+    
+
 '''
 #Function has not been tested or implemented in program.
 def get_images(propertysoup):
@@ -231,10 +254,11 @@ def get_property_size(soup):
         fields['size'] = data
 
 
-def get_features_and_info(soup):
+featuresattrs = {"class": "propertyIcon"}
+def get_features_and_info(propertysoup):
     """Get features and property information."""
     
-    obj = soup.find('i', class_='propertyIcon')
+    obj = soup.find("i", attrs=featursattrs)
 
     if obj is not None:
         for obj in soup.find_all('i', class_='propertyIcon'):
@@ -319,8 +343,8 @@ header = ('Address', 'Size',
           'Pet Policy', 'Distance', 'Duration',
           'Parking', 'Gym', 'Kitchen', 'Amenities',
           'Features', 'Living Space', 'Lease Info', 'Services',
-          'Property Info', 'Indoor Info', 'Outdoor Info',
-          'Images', 'Description')
+          , 'Indoor Info', 'Outdoor Info',
+    
 
 def getallinfo():
     """Get info from each property on the results pages."""
@@ -328,16 +352,7 @@ def getallinfo():
     soup = BS(page.text, 'html.parser')
     for item in soup.find_all('article', class_='placard'):
         
-        
-        row = [fields['name'], contact,
-               fields['address'], fields['size'],
-               rent, fields['monthFees'], fields['onceFees'],
-               fields['petPolicy'], fields['distance'], fields['duration'],
-               fields['parking'], fields['gym'], fields['kitchen'],
-               fields['amenities'], fields['features'], fields['space'],
-               fields['lease'], fields['services'],
-               fields['info'], fields['indoor'], fields['outdoor'],
-               fields['img'], fields['description']]
+
         
 def getlastpagenum(searchresultsoup):
     """Gets last page from results."""

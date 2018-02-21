@@ -20,35 +20,42 @@ class Property(Base):
     _id = Column(Integer, primary_key=True)
     #_id is also a URL extension
     name = Column(String, nullable=False)
+    rating = Column(Integer)
     address = Column(String)
     city = Column(String)
     state = Column(String(2), nullable=False)
     zipcode = Column(String(5))
     url = Column(String)
-    
-    
 
+    
 class Listing(Base):
     """SQL table to store scraped data."""
     __tablename__ = "Listing"
 
-    _id = Column(Integer, primary_key=True)
+    _id = Column(String, primary_key=True)
+    model = Column(String)
+    availability = Column(String)
     propertyid = Column(Integer, ForeignKey("Property._id"))
     fees = Column(String)
     accessed = Column(DateTime)
+    bathroom = Column(Integer)
+    bedroom = Column(Integer) #0 corresponds to a studio apartment
+    deposit = Column(Integer)
 
+    rentalkey = Column(String)
+    
     #Use rent if an exact number is given.
+    #Apartments.com is based in the US, so rent is assumed to be in USD ($).
     rent = Column(Integer)
     minprice = Column(Integer)
     maxprice = Column(Integer)
-    #Apartments.com is based in the US, so rent is assumed to be in USD ($).
     
+
+    sqft = Column(Integer)
     
-    
-    rating = Column(Integer)
 
     def __repr__(self):
-        return f"<Listing(_id='{self._id}', )>"
+        return f"<Listing(='{self._id}', )>"
     
 
 def makesession(engine=None):
@@ -95,4 +102,6 @@ def main(dbname):
 
     for listing in session.query(Listing.state, Listing.city).order_by(Listing.city):
         print(listing.state)
+
+    session.close()
 
