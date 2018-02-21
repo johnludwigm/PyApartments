@@ -1,19 +1,40 @@
 import sqlalchemy
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
 from sqlalchemy.orm import sessionmaker, relationship
 
 Base = declarative_base()
 import warnings
+
+#I noticed that my address has different listings depending on
+#whether I searched by address or by property manager.
+
+#I will collect data as if listings by address and listings by property
+#manager were distinct. #I will then associate the address listings with the
+#addresses listed for the property managers, if available.
+
+class Property(Base):
+    """SQL table to store info on property."""
+    __table__ = "Property"
+
+    _id = Column(Integer, primary_key=True)
+    #_id is also a URL extension
+    name = Column(String, nullable=False)
+    address = Column(String)
+    city = Column(String)
+    state = Column(String(2), nullable=False)
+    zipcode = Column(String(5))
+    url = Column(String)
+    
+    
 
 class Listing(Base):
     """SQL table to store scraped data."""
     __tablename__ = "Listing"
 
     _id = Column(Integer, primary_key=True)
-    #If I discover that Apartments.com assigns unique ids, then I'll change
-    #to sequence as below
-    #Column(Integer, Sequence('idseq'), primary_key=True)
+    propertyid = Column(Integer, ForeignKey("Property._id"))
+    fees = Column(String)
     accessed = Column(DateTime)
 
     #Use rent if an exact number is given.
@@ -22,8 +43,7 @@ class Listing(Base):
     maxprice = Column(Integer)
     #Apartments.com is based in the US, so rent is assumed to be in USD ($).
     
-    city = Column(String)
-    url
+    
     
     rating = Column(Integer)
 

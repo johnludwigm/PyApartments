@@ -110,51 +110,33 @@ class PyApartment(object):
             return result.text
         else:
             return result.content
-        
+
+
+    def getinfo(self):
+        """Apply to an article."""
     # get the name of the property
-    get_property_name(soup)
+    getpropertyname(soup)
     # get the address of the property
-    get_property_address(soup)
+    getpropertyaddress(soup)
     # get the size of the property
     get_property_size(soup)
     # get the one time and monthly fees
-    get_fees(soup)
+    getallfees(propertysoup)
     # get the images as a list
-    get_images(soup)
-    get_description(soup)
+    #get_images(soup)
+    getpropertydescription(soup)
     # only look in this section (other sections are for example for printing)
     soup = soup.find('section', class_='specGroup js-specGroup')
     get_pet_policy(soup, fields)
     # get parking information
     get_parking_info(soup, fields)
-    # get the amenities description
-    get_field_based_on_class(soup, 'amenities', 'featuresIcon')
-    # get the 'interior information'
-    get_field_based_on_class(soup, 'indoor', 'interiorIcon', fields)
-    # get the 'outdoor information'
-    get_field_based_on_class(soup, 'outdoor', 'parksIcon', fields)
-    # get the 'gym information'
-    get_field_based_on_class(soup, 'gym', 'fitnessIcon', fields)
-    # get the 'kitchen information'
-    get_field_based_on_class(soup, 'kitchen', 'kitchenIcon', fields)
-    # get the 'services information'
-    get_field_based_on_class(soup, 'services', 'servicesIcon', fields)
-    # get the 'living space information'
-    get_field_based_on_class(soup, 'space', 'sofaIcon', fields)
-    # get the lease length
-    get_field_based_on_class(soup, 'lease', 'leaseIcon')
     # get the 'property information'
     get_features_and_info(soup)
-    return fields
+    
 
-def get_field_based_on_class(soup, field, icon, fields):
-    """Given a beautifulSoup parsed page, extract the specified field based on the icon"""    
-    obj = soup.find('i', attrs={"class": "icon"})
-    if obj is not None:
-        data = obj.parent.findNext('ul').getText()
-        data = prettify_text(data)
-
-        fields[field] = data
+#######################################
+#Apply to the results page of a search#
+#######################################
 
 def getlastpagenum(resultsoup):
     """Gets last page from results."""
@@ -167,22 +149,76 @@ def getlastpagenum(resultsoup):
     return max(int(tag["data-page"]) for tag in result
                if not tag.has_attr("class"))
 
-def get_images(propertypagesoup):
+
+def iterpages(url, lastpagenum=1):
+    """Generator yielding URLs for all pages in a search result."""
+    if lastpagenum == 1:
+        yield url
+    else:
+        for num in range(2, lastpagenum + 1):
+            yield url + f"{num}/"
+
+
+#########################
+#Apply to property pages#
+#########################
+onetimefeesattrs = {"class": "oneTimeFees"}
+monthlyfeesattrs = {"class": "monthlyFees"}
+feeattr = {"class": "descriptionWrapper"}
+
+
+def getfees(fees_tag):
+    """Returns string detailing fees."""
+    if fees_tag is None:
+        return None
+    individualfees = fees_tag.find_all("span")
+    if len(individualfees) % 2 == 1:
+        #We expect that the span tags alternate between a description
+        #of a fee and the amount of the fee. So an odd number of span tags
+        #is unexpected.
+        return None
+    fees = []
+    iterfees = iter(individualfees)
+    while True:
+        try:
+            description = cleantext(next(iterfees).text)
+            price = cleantext(next(iterfees).text)
+            fees.append(f"{description}: {price}")
+        except StopIteration:
+            break
+    return ", ".join(fees)
+
+
+def getallfees(propertysoup):
+    """Returns dictionary of one time fees and monthly fees."""
+    onetimefees_tag = propertysoup.find('div', attrs=onetimefeesattrs)       
+    monthlyfees_tag = propertysoup.find("div", attrs=monthlyfeestag)
+
+    return {"onetimefees": getfees(onetimefees_tag),
+            "monthlyfees": getfees(monthlyfees_tag)}
+
+
+'''
+#Function has not been tested or implemented in program.
+def get_images(propertysoup):
     """Get the images of the apartment."""
     # find ul with id fullCarouselCollection
-    soup = soup.find('ul', {'id': 'fullCarouselCollection'})
+    soup = propertysoup.find('ul', {"id": 'fullCarouselCollection'})
     if soup is not None:
         #This is markdown.
-        return " ".join(f"![{imgtag['alt']}]({imgtag['src']})"
+        return " ".join(f"![{imgtag["alt"]}]({imgtag["src"]})"
                         for imgtag in soup.find_all("img"))
+'''
 
 
-def get_description(soup):
-    """Get the description for the apartment"""
-    # find p with itemprop description
-    obj = soup.find('p', {'itemprop': 'description'})
-    if obj is not None:
-        return cleantext(obj.getText())
+descriptionattrs = {"itemprop": "description"}
+def getpropertydescription(propertysoup):
+    """Get the description for the property."""
+    descriptiontag = propertysoup.find("p", attrs=descriptionattrs)
+    if descriptiontag is not None:
+        return cleantext(descriptiontag.text)
+    return None
+
 
 def get_property_size(soup):
     """Get the property size of the first one bedroom."""
@@ -213,9 +249,11 @@ def get_features_and_info(soup):
                 fields['info'] = data
 
 
+#Expand: Are pets allowed?
+parkingattrs = {"class": "parkingDetails"}
 def get_parking_info(soup):
     """Given parking information."""   
-    obj = soup.find('div', class_='parkingDetails')
+    obj = soup.find('div', attrs = parkingattrs)
     if obj is not None:
         data = obj.getText()
         data = prettify_text(data)
@@ -224,67 +262,27 @@ def get_parking_info(soup):
         return data #strip?
 
 
-def get_pet_policy(soup):
-    """Get information on pet policy."""
-    data = soup.find('div', {"class": "petPolicyDetails"})
-    if data is None:
-        data = ''
-    else:
-        data = data.getText()
-        data = prettify_text(data)
-
-    # format it nicely: remove the trailing whitespace
-    fields['petPolicy'] = data
-
-
-def get_fees(soup):
-    """Get one time fees and monthly fees."""
-
-    fields['monthFees'] = ''
-    fields['onceFees'] = ''
-    obj = soup.find('div', attrs={"class": "monthlyFees"})
-    if obj is not None:
-        for expense in obj.find_all('div', class_='fee'):
-            description = expense.find(
-                'div', class_='descriptionWrapper').getText()
-            description = prettify_text(description)
-
-            price = expense.find('div', class_='priceWrapper').getText()
-            price = prettify_text(price)
-
-            fields['monthFees'] += '* ' + description + ': ' + price + '\n'
-
-    # get one time fees
-    obj = soup.find('div', attrs={"class": "oneTimeFees"})
-    if obj is not None:
-        for expense in obj.find_all('div', class_='fee'):
-            description = expense.find(
-                'div', class_='descriptionWrapper').getText()
-            description = prettify_text(description)
-
-            price = expense.find('div', class_='priceWrapper').getText()
-            price = prettify_text(price)
-
-            fields['onceFees'] += '* ' + description + ': ' + price + '\n'
-
-    # remove ending \n
-    fields['monthFees'] = fields['monthFees'].strip()
-    fields['onceFees'] = fields['onceFees'].strip()
-
+#######################
+#Apply to article tags#
+#######################
 propertynameattrs = {"itemprop": "name", "content": True}
 def getpropertyname(articletag):
     """Return name of the property."""
     tag = articletag.find("meta", attrs=propertynameattrs)
     return cleantext(tag["content"])
 
-from collections import namedtuple
 
 addressattrs = {"itemprop": "streetAddress", "content": True}
 cityattrs = {"itemprop": "addressLocality", "content": True}
 regionattrs = {"itemprop": "addressRegion", "content": True}
 zipcodeattrs = {"itemprop": "postalCode", "content": True}
 def getpropertyaddress(articletag):
-    """Get full address of the property."""
+    """Returns dictionary giving full address of the property.
+    {"address": address,
+     "city": city,
+     "state": state,
+     "zipcode, zipcode"}
+    """
     addresstag = articletag.find("meta", attrs=addressattrs)
     address = cleantext(addresstag["content"])
 
@@ -296,7 +294,8 @@ def getpropertyaddress(articletag):
 
     zipcodetag = articletag.find("meta", attrs=zipcodeattrs)
     zipcode = cleantext(zipcodetag["content"])
-    return (address, city, state, zipcode)
+    return {"address": address, "city": city,
+            "state": state, "zipcode, zipcode"}
 
 
 urlattrs = {"class": True, "href": True, "title": True}
@@ -315,7 +314,7 @@ def getphonenumber(articletag):
     else:
         return cleantext(span[0].text)
 
-header = ('Option Name', 'Contact', 'Address', 'Size',
+header = ('Address', 'Size',
           'Rent', 'Monthly Fees', 'One Time Fees',
           'Pet Policy', 'Distance', 'Duration',
           'Parking', 'Gym', 'Kitchen', 'Amenities',
@@ -323,22 +322,13 @@ header = ('Option Name', 'Contact', 'Address', 'Size',
           'Property Info', 'Indoor Info', 'Outdoor Info',
           'Images', 'Description')
 
-
-def getallinfo(page_url, map_info, writer, pscores):
-    """Given the current page URL, extract the information from each apartment in the list"""
+def getallinfo():
+    """Get info from each property on the results pages."""
 
     soup = BS(page.text, 'html.parser')
     for item in soup.find_all('article', class_='placard'):
         
-        if obj is not None:
-            rent = obj.getText().strip()            
-
-        fields = parse_apartment_information(url, map_info)
-
-        fields['name'] = '[' + fields['name'] + '](' + url + ')'
-        fields['address'] = '[' + fields['address'] + '](' + fields['map'] + ')'
-
-        # fill out the CSV file
+        
         row = [fields['name'], contact,
                fields['address'], fields['size'],
                rent, fields['monthFees'], fields['onceFees'],
@@ -348,29 +338,8 @@ def getallinfo(page_url, map_info, writer, pscores):
                fields['lease'], fields['services'],
                fields['info'], fields['indoor'], fields['outdoor'],
                fields['img'], fields['description']]
-        # add the score fields if necessary
-        if pscores:
-            for i in range(len(row), 0, -1):
-                row.insert(i, '5')
-            row.append('0')
-        # write the row
-        writer.writerow(row)
-
-    # get the next page URL for pagination
-    next_url = soup.find('a', attrs={"class": "next"})
-    # if there's only one page this will actually be none
-    if next_url is None:
-        return None
-
-    # get the actual next URL address
-    next_url = next_url.get('href')
-
-    # recurse until the last page
-    if next_url is not None and next_url != 'javascript:void(0)':
-        write_parsed_to_csv(next_url, map_info, writer, pscores)
-
-
-def getlastpagenum(soup):
+        
+def getlastpagenum(searchresultsoup):
     """Gets last page from results."""
     #The footer of the results page lists pages containing at most 25
     #results each. So at the bottom of the landing page for a search that
