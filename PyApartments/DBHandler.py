@@ -18,7 +18,7 @@ class Property(Base):
     __table__ = "Property"
 
     _id = Column(Integer, primary_key=True)
-    #_id is also a URL extension
+    
     name = Column(String, nullable=False)
     rating = Column(Integer)
     address = Column(String)
