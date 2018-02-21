@@ -156,7 +156,18 @@ def get_field_based_on_class(soup, field, icon, fields):
 
         fields[field] = data
 
-def get_images(soup):
+def getlastpagenum(resultsoup):
+    """Gets last page from results."""
+    #The footer of the results page lists pages containing at most 25
+    #results each. So at the bottom of the landing page for a search that
+    #would get 126 results, it would say <1 2 3 ... 6>. 25 results on each
+    #of pages 1 (current), 2, 3, 4, and 5, but 1 result on page 6.
+
+    result = soup.select("li div a")    
+    return max(int(tag["data-page"]) for tag in result
+               if not tag.has_attr("class"))
+
+def get_images(propertypagesoup):
     """Get the images of the apartment."""
     # find ul with id fullCarouselCollection
     soup = soup.find('ul', {'id': 'fullCarouselCollection'})
@@ -272,7 +283,7 @@ addressattrs = {"itemprop": "streetAddress", "content": True}
 cityattrs = {"itemprop": "addressLocality", "content": True}
 regionattrs = {"itemprop": "addressRegion", "content": True}
 zipcodeattrs = {"itemprop": "postalCode", "content": True}
-def get_property_address(articletag):
+def getpropertyaddress(articletag):
     """Get full address of the property."""
     addresstag = articletag.find("meta", attrs=addressattrs)
     address = cleantext(addresstag["content"])
@@ -294,6 +305,16 @@ def getpropertyurl(articletag):
     return cleantext(tag["href"])
 
 
+phoneattrs = {"class": "phone"}
+def getphonenumber(articletag):
+    """Returns string phone number (apartments.com formats as ddd-ddd-dddd)."""
+    phonetag = articletag.find("div", attrs=phoneattrs)
+    span = list(phonetag.descendants)
+    if span == []:
+        return None
+    else:
+        return cleantext(span[0].text)
+
 header = ('Option Name', 'Contact', 'Address', 'Size',
           'Rent', 'Monthly Fees', 'One Time Fees',
           'Pet Policy', 'Distance', 'Duration',
@@ -307,26 +328,10 @@ def getallinfo(page_url, map_info, writer, pscores):
     """Given the current page URL, extract the information from each apartment in the list"""
 
     soup = BS(page.text, 'html.parser')
-    # append the current apartments to the list
     for item in soup.find_all('article', class_='placard'):
-        url = ''
-        rent = ''
-        contact = ''
-
-        if item.find('a', class_='placardTitle') is None: continue
-        url = item.find('a', class_='placardTitle').get('href')
-
-        # get the rent and parse it to unicode
-        obj = item.find('span', attrs={"class": "altRentDisplay"})
+        
         if obj is not None:
-            rent = obj.getText().strip()
-
-        # get the phone number and parse it to unicode
-        phonenumbertag = item.find('div', attrs={"class": "phone"})
-        if phonenumbertag is not None:
-            phonenumber = cleantext(obj.getText())
-        else:
-            phonenumber = None            
+            rent = obj.getText().strip()            
 
         fields = parse_apartment_information(url, map_info)
 
