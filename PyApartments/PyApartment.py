@@ -89,7 +89,10 @@ class PyApartment(object):
         :param propertysoup: bs4.BeautifulSoup for the property page
         :param propertytable: SQLAlchemy Property record.
         """
-        listings = soup.find_all("tr", {"class": ["rentalGridRow", "hideOnCollapsed", ""]})
+        yield from soup.find_all("tr", attrs={"class":
+                                              ["rentalGridRow",
+                                               "hideOnCollapsed",
+                                               ""]})
         
         
 
@@ -158,30 +161,6 @@ def getallfees(propertysoup):
             "monthlyfees": getfees(monthlyfees_tag)}
 
 
-
-
-
-def getlistings(propertysoup):
-    """Generator yielding SQLAlchemy Listing objects.
-    :param propertysoup: bs4.BeautifulSoup for the property page
-    :param propertytable: SQLAlchemy Property record.
-    """
-    
-    
-
-'''
-#Function has not been tested or implemented in program.
-def get_images(propertysoup):
-    """Get the images of the apartment."""
-    # find ul with id fullCarouselCollection
-    soup = propertysoup.find('ul', {"id": 'fullCarouselCollection'})
-    if soup is not None:
-        #This is markdown.
-        return " ".join(f"![{imgtag["alt"]}]({imgtag["src"]})"
-                        for imgtag in soup.find_all("img"))
-'''
-
-
 descriptionattrs = {"itemprop": "description"}
 def getpropertydescription(propertysoup):
     """Get the description for the property."""
@@ -200,38 +179,6 @@ def get_property_size(soup):
         data = obj.find('td', class_='sqft').getText()
         data = prettify_text(data)
         fields['size'] = data
-
-
-featuresattrs = {"class": "propertyIcon"}
-def get_features_and_info(propertysoup):
-    """Get features and property information."""
-    
-    obj = soup.find("i", attrs=featursattrs)
-
-    if obj is not None:
-        for obj in soup.find_all('i', class_='propertyIcon'):
-            data = obj.parent.findNext('ul').getText()
-            data = prettify_text(data)
-
-            if obj.parent.findNext('h3').getText().strip() == 'Features':
-                # format it nicely: remove trailing spaces
-                fields['features'] = data
-            if obj.parent.findNext('h3').getText() == 'Property Information':
-                # format it nicely: remove trailing spaces
-                fields['info'] = data
-
-
-#Expand: Are pets allowed?
-parkingattrs = {"class": "parkingDetails"}
-def get_parking_info(soup):
-    """Given parking information."""   
-    obj = soup.find('div', attrs = parkingattrs)
-    if obj is not None:
-        data = obj.getText()
-        data = prettify_text(data)
-
-        # format it nicely: remove trailing spaces
-        return data #strip?
 
 
 #######################
@@ -286,12 +233,6 @@ def getphonenumber(articletag):
         return None
     else:
         return cleantext(span[0].text)
-
-def iterproperties():
-    """Get info from each property on the results pages."""
-
-    soup = BS(page.text, 'html.parser')
-    for item in soup.find_all('article', class_='placard'):
         
         
 def getlastpagenum(searchresultsoup):

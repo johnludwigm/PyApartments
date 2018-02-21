@@ -1,7 +1,7 @@
 
 #################################
 #Apply to individual listings in#
-# the table on a property page  #
+# the table on a property page. #
 #################################
 
 import re
@@ -56,13 +56,15 @@ def getdeposit(tablerowsoup):
     """Returns integer deposit."""
     deposittag = tablerowsoup.find("td", attrs=depositattrs)
     return resolvenumbers(deposittag.text.strip(" $"))[0]
-    
+
+
 unitattrs = {"class": "unit"}
 def getunit(tablerowsoup):
     """Returns string identifying the listed unit."""
     unittag = tablerowsoup.find("td", attrs=unitattrs)
     returnstr = unittag.text.strip()
     return returnstr if returnstr != "" else None
+
 
 def getdata(tablerowsoup):
     """Returns dictionary:
