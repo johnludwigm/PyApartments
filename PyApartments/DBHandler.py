@@ -1,7 +1,8 @@
 import warnings
 import sqlalchemy
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Table, Index
+from sqlalchemy import (Column, Integer, String, Float,
+                        DateTime, ForeignKey, Table, Index)
 from sqlalchemy.orm import sessionmaker, relationship
 
 dbname = "apartmentlistings.db"
@@ -16,23 +17,24 @@ Base = declarative_base()
 #manager were distinct. #I will then associate the address listings with the
 #addresses listed for the property managers, if available.
 
+
 class Property(Base):
     """SQL table to store info on a property manager."""
     __table__ = "Property"
     
     _id = Column(String(36), primary_key=True)
     name = Column(String, nullable=False)
-    rating = Column(Integer)
-    address = Column(String)
-    fees = Column(String)
-    city = Column(String)
+    rating = Column(Integer, default=None)
+    address = Column(String, default=None)
+    fees = Column(String, default=None)
+    city = Column(String, nullable=False)
     state = Column(String(2), nullable=False)
-    zipcode = Column(String(5))
-    url = Column(String)
-    monthlyfees = Column(String)
-    onetimefees = Column(String)
-    companykey = Column(String)
-    accessed = Column(DateTime)
+    zipcode = Column(String(5), nullable=False)
+    url = Column(String, default=None)
+    monthlyfees = Column(String, default=None) 
+    onetimefees = Column(String, default=None)
+    companykey = Column(String, default=None)
+    accessed = Column(DateTime, default=None)
 
 
     def __repr__(self):
@@ -50,8 +52,8 @@ class Listing(Base):
     propertyid = Column(String, ForeignKey("Property._id"))
     fees = Column(String)
     accessed = Column(DateTime)
-    bathroom = Column(Integer)
-    bedroom = Column(Integer) #0 corresponds to a studio apartment
+    bathrooms = Column(Integer)
+    bedrooms = Column(Integer) #0 corresponds to a studio apartment
     deposit = Column(Integer)
     rent = Column(Integer)
     minrent = Column(Integer)
@@ -63,14 +65,19 @@ class Listing(Base):
         return f"<Listing(_id='{self._id}', accessed='{self.accessed}')>"
     
 
-if __name__ == "__main__":
+def createdb(dbname, echo=False):
+    """Creates the SQLite database using SQLAlchemy.
+    :param dbname: string path of database
+    :param base: sqlalchemy.ext.declarative.declarative_base instance
+    :param echo: sqlalchemy echo parameter
+    :param metadata: sqlalchemy.MetaData object
+    """
     engine = sqlalchemy.create_engine(f"sqlite:///{dbname}", echo=False,
                                       encoding="utf-8")
     metadata = sqlalchemy.MetaData(bind=engine)
-
-
-    #Users will want to look things up based on characteristics, but I
-    #just want to check property name, _id.
+    #It is more efficient to create an index AFTER inserting the
+    #initial data (Compare N-many insertions taking n * log(n) time,
+    #where n <= N, to one N * log(N) operation).
     propertytable = Table("Property", metadata,
                           Column("_id", String(36), primary_key=True),
                           Column("name", String, nullable=False),
@@ -87,7 +94,6 @@ if __name__ == "__main__":
                           Column("accessed", DateTime),
                           Index("idx_propertyname", "name"),
                           Index("idx_property_id", "_id"))
-
     listingtable = Table("Listing", metadata,
                          Column("_id", String(36), primary_key=True),
                          Column("availability", String),
@@ -105,5 +111,8 @@ if __name__ == "__main__":
                          Column("maxrent", Integer),
                          Column("sqft", Integer),
                          Index("idx_listing_id", "_id"))
-                          
-    metadata.create_all(engine)                         
+    metadata.create_all(engine) 
+
+
+if __name__ == "__main__":
+    createdb(dbname)               

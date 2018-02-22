@@ -3,20 +3,6 @@ import os
 import sqlalchemy
 
 
-def createdb(dbname, echo=echo):
-    """Creates the SQLite database using SQLAlchemy.
-    :param dbname: string path of database
-    :param base: sqlalchemy.ext.declarative.declarative_base instance
-    :param echo: sqlalchemy echo parameter
-    :param metadata: sqlalchemy.MetaData object
-    """
-    engine = sqlalchemy.create_engine(dbname, echo=echo)
-    Base = sqlalchemy.ext.declarative.declarative_base()
-    
-
-    #It is more efficient to create an index AFTER you've inserted
-    #the initial data.
-
 def main(dbname="apartmentlistings.db", echo=False, zipcode=None):
     """Intended to access a local database.
     :param dbname: String absolute path to the database, relative path
@@ -42,11 +28,6 @@ def makesession(engine=None):
         warnings.warn("You must later call Session.configure(bind=engine).")
         return sessionmaker()
     return sessionmaker(bind=engine)
-
-
-irstlisting = session.query(Listing).filter_by(city="Austin",
-                                                    state="TX").first()
-
     
 
 def main(dbname):
