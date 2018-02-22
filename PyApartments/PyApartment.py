@@ -1,7 +1,9 @@
-import DBHandler
+#import DBHandler
 from bs4 import BeautifulSoup as BS
+import datecommons
 import requests
 from html import unescape
+import re
 
 def cleantext(text):
     """Returns stripped, unescaped text."""
@@ -9,22 +11,20 @@ def cleantext(text):
 
 
 baseURL = "https://www.apartments.com/"
-descriptors = ("bathrooms",
-               "bedrooms", 
-               "city",
-               "maxprice",
-               "minprice",
-               "state")
-
-
+#zipcode < state < city
 class PyApartment(object):
     
     def __init__(self, url=None, session=None):
-        if self.session is None:
+        if session is None:
             self.session = requests.Session()
 
-        self.soup = self.get(url)
-            
+        if url is not None:
+            self.soup = BS(self.get(url), "html.parser")
+        else:
+            self.soup = None
+        self.url = url
+
+        
     def getlistings(self, **kwargs):
         """Get listings given specifications.
         :param bathrooms: Integer number of bathrooms (1 - 3; 3 = 3+)
@@ -43,15 +43,17 @@ class PyApartment(object):
 
     def get(self, url, html=True, content=False):
         """Handles self.session and returns data from desired URL."""
-        if text and content:
+        if html and content:
             raise Exception("Either HTML text OR content may be returned.")
         try:
             result = self.session.get(url)
+            self.url = result.url
         except Exception as exc:
             print(exc)
             self.session = requests.Session()
             try:
                 result = self.session.get(url)
+                self.url = result.url
             except:
                 raise Exception("Cannot resolve requests.Session object.")
         if html:
@@ -66,23 +68,14 @@ class PyApartment(object):
         will be updated with current information and timestamped.
         """
         
-        prop = getpropertyname(soup)
-        # get the address of the property
-    getpropertyaddress(soup)
-    # get the size of the property
-    get_property_size(soup)
-    getallfees(propertysoup)
-    # get the images as a list
-    #get_images(soup)
-    getpropertydescription(soup)
-    # only look in this section (other sections are for example for printing)
-    soup = soup.find('section', class_='specGroup js-specGroup')
-    get_pet_policy(soup, fields)
-    # get parking information
-    get_parking_info(soup, fields)
-    # get the 'property information'
-    get_features_and_info(soup)
-
+        propertyname = getpropertyname(soup)
+        address = getpropertyaddress(soup)
+        
+        getallfees(propertysoup)
+        getpropertydescription(soup)
+        if timestamp:
+            accesstime = datecommons.utcstamp()
+        
 
     def getlistings(self, propertysoup, propertytable):
         """Generator yielding SQLAlchemy Listing objects.
@@ -93,22 +86,19 @@ class PyApartment(object):
                                               ["rentalGridRow",
                                                "hideOnCollapsed",
                                                ""]})
-        
-        
 
 
 #######################################
 #Apply to the results page of a search#
 #######################################
-
-def getlastpagenum(resultsoup):
+def getlastpagenum(searchresultsoup):
     """Gets last page from results."""
     #The footer of the results page lists pages containing at most 25
     #results each. So at the bottom of the landing page for a search that
     #would get 126 results, it would say <1 2 3 ... 6>. 25 results on each
     #of pages 1 (current), 2, 3, 4, and 5, but 1 result on page 6.
 
-    result = soup.select("li div a")    
+    result = searchresultsoup.select("li div a")    
     return max(int(tag["data-page"]) for tag in result
                if not tag.has_attr("class"))
 
@@ -122,14 +112,19 @@ def iterpages(url, lastpagenum=1):
             yield url + f"{num}/"
 
 
+searchpropertyattrs = {"class": True, "data-listingid": True, "data-url": True}
+def getproperties(searchresultsoup):
+    """Generator yielding properties on a given search results page."""
+    results = searchresultsoup.find_all("article", attrs=searchpropertyattrs)
+    yield from results
+
+                     
 #########################
 #Apply to property pages#
 #########################
 onetimefeesattrs = {"class": "oneTimeFees"}
 monthlyfeesattrs = {"class": "monthlyFees"}
 feeattr = {"class": "descriptionWrapper"}
-
-
 def getfees(fees_tag):
     """Returns string detailing fees."""
     if fees_tag is None:
@@ -155,7 +150,7 @@ def getfees(fees_tag):
 def getallfees(propertysoup):
     """Returns dictionary of one time fees and monthly fees."""
     onetimefees_tag = propertysoup.find('div', attrs=onetimefeesattrs)       
-    monthlyfees_tag = propertysoup.find("div", attrs=monthlyfeestag)
+    monthlyfees_tag = propertysoup.find("div", attrs=monthlyfeesattrs)
 
     return {"onetimefees": getfees(onetimefees_tag),
             "monthlyfees": getfees(monthlyfees_tag)}
@@ -170,20 +165,15 @@ def getpropertydescription(propertysoup):
     return None
 
 
-def get_property_size(soup):
-    """Get the property size of the first one bedroom."""
-    #note: this might be wrong if there are multiple matches!!!
-    fields['size'] = ''    
-    obj = soup.find('tr', {'data-beds': '1'})
-    if obj is not None:
-        data = obj.find('td', class_='sqft').getText()
-        data = prettify_text(data)
-        fields['size'] = data
-
-
 #######################
 #Apply to article tags#
 #######################
+urlattrs = {"class": True, "href": True, "title": True}
+def getpropertyurl(articletag):
+    tag = articletag.find("a", attrs=urlattrs)
+    return cleantext(tag["href"])
+
+
 propertynameattrs = {"itemprop": "name", "content": True}
 def getpropertyname(articletag):
     """Return name of the property."""
@@ -215,33 +205,20 @@ def getpropertyaddress(articletag):
     zipcodetag = articletag.find("meta", attrs=zipcodeattrs)
     zipcode = cleantext(zipcodetag["content"])
     return {"address": address, "city": city,
-            "state": state, "zipcode, zipcode"}
-
-
-urlattrs = {"class": True, "href": True, "title": True}
-def getpropertyurl(articletag):
-    tag = articletag.find("a", attrs=urlattrs)
-    return cleantext(tag["href"])
+            "state": state, "zipcode": zipcode}
 
 
 phoneattrs = {"class": "phone"}
+phonepattern = re.compile("\d{3}-\d{3}-\d{4}")
+def helper(item):
+    return isinstance(item, str) and phonepattern.match(item)
+
+
 def getphonenumber(articletag):
     """Returns string phone number (apartments.com formats as ddd-ddd-dddd)."""
     phonetag = articletag.find("div", attrs=phoneattrs)
-    span = list(phonetag.descendants)
-    if span == []:
+    span = list(filter(helper, phonetag.descendants))
+    if span is None:
         return None
     else:
-        return cleantext(span[0].text)
-        
-        
-def getlastpagenum(searchresultsoup):
-    """Gets last page from results."""
-    #The footer of the results page lists pages containing at most 25
-    #results each. So at the bottom of the landing page for a search that
-    #would get 126 results, it would say <1 2 3 ... 6>. 25 results on each
-    #of pages 1 (current), 2, 3, 4, and 5, but 1 result on page 6.
-
-    result = soup.select("li div a")    
-    return max(int(tag["data-page"]) for tag in result
-               if not tag.has_attr("class"))
+        return cleantext(span[0])

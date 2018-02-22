@@ -26,6 +26,8 @@ class Property(Base):
     state = Column(String(2), nullable=False)
     zipcode = Column(String(5))
     url = Column(String)
+    monthlyfees = Column(String)
+    onetimefees = Column(String)
 
     
 class Listing(Base):
@@ -41,16 +43,10 @@ class Listing(Base):
     bathroom = Column(Integer)
     bedroom = Column(Integer) #0 corresponds to a studio apartment
     deposit = Column(Integer)
-
     rentalkey = Column(String)
-    
-    #Use rent if an exact number is given.
-    #Apartments.com is based in the US, so rent is assumed to be in USD ($).
     rent = Column(Integer)
     minprice = Column(Integer)
     maxprice = Column(Integer)
-    
-
     sqft = Column(Integer)
     
 
