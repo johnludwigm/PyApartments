@@ -1,11 +1,13 @@
+import warnings
 import sqlalchemy
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Table, Index
 from sqlalchemy.orm import sessionmaker, relationship
 
 dbname = "apartmentlistings.db"
+
 Base = declarative_base()
-import warnings
+
 
 #I noticed that my address has different listings depending on
 #whether I searched by address or by property manager.
@@ -45,7 +47,6 @@ class Listing(Base):
     availability = Column(String)
     rentalkey = Column(String)
     model = Column(String)
-
     propertyid = Column(String, ForeignKey("Property._id"))
     fees = Column(String)
     accessed = Column(DateTime)
@@ -63,12 +64,9 @@ class Listing(Base):
     
 
 if __name__ == "__main__":
-    engine = sqlalchemy.create_engine(f"sqlite:///{dbname}", echo=echo,
+    engine = sqlalchemy.create_engine(f"sqlite:///{dbname}", echo=False,
                                       encoding="utf-8")
-    Base.metadata.create_all(bind=engine)
-    Session = sessionmaker(bind=engine)
-    session = Session()
-    metadata = MetaData()
+    metadata = sqlalchemy.MetaData(bind=engine)
 
 
     #Users will want to look things up based on characteristics, but I
@@ -89,7 +87,23 @@ if __name__ == "__main__":
                           Column("accessed", DateTime),
                           Index("idx_propertyname", "name"),
                           Index("idx_property_id", "_id"))
+
+    listingtable = Table("Listing", metadata,
+                         Column("_id", String(36), primary_key=True),
+                         Column("availability", String),
+                         Column("rentalkey", String),
+                         Column("model", String),
+                         Column("property_id", String,
+                                ForeignKey("Property._id")),
+                         Column("fees", String),
+                         Column("accessed", DateTime),
+                         Column("bathrooms", Integer),
+                         Column("bedrooms", Integer),
+                         Column("deposit", Integer),
+                         Column("rent", Integer),
+                         Column("minrent", Integer),
+                         Column("maxrent", Integer),
+                         Column("sqft", Integer),
+                         Index("idx_listing_id", "_id"))
                           
-                          
-    
-    
+    metadata.create_all(engine)                         

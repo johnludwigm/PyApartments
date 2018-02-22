@@ -12,8 +12,7 @@ def createdb(dbname, echo=echo):
     """
     engine = sqlalchemy.create_engine(dbname, echo=echo)
     Base = sqlalchemy.ext.declarative.declarative_base()
-
-
+    
 
     #It is more efficient to create an index AFTER you've inserted
     #the initial data.
