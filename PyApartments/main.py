@@ -5,7 +5,8 @@ import sqlite3
 from os import makedirs
 declarative_base = sqlalchemy.ext.declarative.declarative_base
 
-def createdb(dbname, echo=False):
+
+def createdb(dbname):
     """Creates SQLite database.
     :param dbname: String absolute path of database.
     """
@@ -20,8 +21,17 @@ def createdb(dbname, echo=False):
         connection.close()
 
 
-def main():
-    #Still working out target goals.
-    #I will undoubtedly need the following:
+
+def main(dbname="apartmentlistings.db", echo=False, zipcode=None):
+    """Intended to access a local database.
+    :param dbname: String absolute path to the database, relative path
+    by default
+    :param zipcode: String ZIP code of desired search area
+    """
+
+    createdb(dbname)
+    
     engine = sqlalchemy.create_engine(f"sqlite:///{dbname}", echo=echo)
     Base = declarative_base()
+
+    session = makesession(engine)

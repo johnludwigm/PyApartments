@@ -16,7 +16,11 @@ def cleantext(text):
 
 class PyApartment(object):
     
-    def __init__(self, session=None):
+    def __init__(self, session=None, sqlsession=None):
+        """
+        :param session: requests.Session object
+        :param sqlsession: sqlalchemy.session object
+        """
         if session is None:
             self.session = requests.Session()
 
@@ -230,10 +234,12 @@ def helper(item):
 
 
 def getphonenumber(articletag):
-    """Returns string phone number (apartments.com formats as ddd-ddd-dddd)."""
+    """Returns string phone number (apartments.com formats as ddd-ddd-dddd).
+    Phone number is returned as 10 digits, no dashes or parentheses...
+    """
     phonetag = articletag.find("div", attrs=phoneattrs)
     span = list(filter(helper, phonetag.descendants))
     if span is None:
         return None
     else:
-        return cleantext(span[0])
+        return cleantext(span[0]).replace("-")

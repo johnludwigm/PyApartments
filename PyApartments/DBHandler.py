@@ -17,8 +17,7 @@ class Property(Base):
     """SQL table to store info on property."""
     __table__ = "Property"
 
-    _id = Column(Integer, primary_key=True)
-    
+    _id = Column(String(36), primary_key=True)
     name = Column(String, nullable=False)
     rating = Column(Integer)
     address = Column(String)
@@ -28,15 +27,19 @@ class Property(Base):
     url = Column(String)
     monthlyfees = Column(String)
     onetimefees = Column(String)
+    companykey = Column(String)
+    accessed = Column(DateTime, default=
 
     
 class Listing(Base):
     """SQL table to store scraped data."""
     __tablename__ = "Listing"
-
-    rentalkey = Column(String, primary_key=True)
-    model = Column(String)
+    
+    _id = Column(String(36), primary_key=True)
     availability = Column(String)
+    rentalkey = Column(String)
+    model = Column(String)
+
     propertyid = Column(Integer, ForeignKey("Property._id"))
     fees = Column(String)
     accessed = Column(DateTime)
@@ -69,22 +72,11 @@ def examplequery(session):
                                                     state="TX").first()
     #firstlisting IS the instance of Listing that we stored to begin with
 
-    #hmm, maybe the listing should be in Dallas
-    firstlisting.city = "Dallas"
-    #session.dirty returns IdentitySet of items that have been modified, but
     #not yet committed.
     #session.new gives IdentitySet of 
     
 
 def main(dbname):
-    """Intended to access a local database.
-    :param dbname: String absolute path to the database
-    """
-    engine = sqlalchemy.create_engine(f"sqlite:///{dbname}", echo=False)
-
-    session = makesession(engine)
-    
-    new_listing = Listing( = 123, rent = 1000)
     session.add(new_listing)
     #the transaction is pending, nothing has been done to the database yet.
     #session.add_all(#iterable of objects)

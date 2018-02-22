@@ -58,6 +58,7 @@ def getdeposit(tablerowsoup):
     return resolvenumbers(deposittag.text.strip(" $"))[0]
 
 
+
 unitattrs = {"class": "unit"}
 def getunit(tablerowsoup):
     """Returns string identifying the listed unit."""
