@@ -5,6 +5,38 @@
 #################################
 
 import re
+import uuid
+import commons
+propertydefaults = {"availability": None,
+                    "bathrooms": None,
+                    "bedrooms": None,
+                    "deposit": None,
+                    "rentalkey": None,
+                    "maxrent": None,
+                    "minrent": None,
+                    "model": None,
+                    "rentalkey": None,
+                    "rent": None,
+                    "sqft": None,
+                    "unit": None}
+
+
+class PropertyListing(object):
+    __slots__ = ("_id", "availability", "rentalkey",
+                 "model", "propertyid", "accessed",
+                 "bathrooms", "bedrooms", "deposit",
+                 "rent", "minrent", "maxrent",
+                 "sqft", "unit")
+
+
+    def __init__(self, **kwargs):
+        self._id = uuid4()
+        self.accessed = commons.utcstamp()
+        for key, defaultvalue in propertydefaults.items():
+            setattr(self, key, kwargs.get(key, default=defaultvalue))
+
+
+    def         
 
 numberpattern = re.compile("[\d,]+")
 def resolvenumbers(text):
@@ -20,10 +52,15 @@ def resolvenumbers(text):
         return [None]
 
 
+def uuid4():
+    """Returns uuid.uuid4 object as string."""
+    return str(uuid.uuid4())
+
+
 rentattrs = {"class": "rent"}
 def getrent(tablerowsoup):
     """Returns list of rent prices.
-    If rent for a listing is given as a range (minprice - maxprice),
+    If rent for a listing is given as a range (minrent - maxrent),
     returns [(int) minprice, (int) maxprice].
     
     Otherwise, returns [(int) rent].
@@ -77,8 +114,8 @@ def getdata(tablerowsoup):
      bathrooms: int,
      bedrooms: int,
      deposit: int,
-     maxprice: int,
-     minprice: int,
+     maxrent: int,
+     minrent: int,
      model: str,
      rentalkey: str,
      rent: int,
@@ -92,7 +129,7 @@ def getdata(tablerowsoup):
     #maxrent = tablerowsoup["data-maxrent"]
     rent = getrent(tablerowsoup)
     if len(rent) == 2:
-        returndict["minprice"], returndict["maxprice"] = rent
+        returndict["minrent"], returndict["maxrent"] = rent
     else:
         returndict["rent"] = rent[0]
 

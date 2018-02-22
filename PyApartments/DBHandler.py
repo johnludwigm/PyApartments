@@ -3,6 +3,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
 from sqlalchemy.orm import sessionmaker, relationship
 
+dbname = "apartmentlistings.db"
 Base = declarative_base()
 import warnings
 
@@ -14,13 +15,14 @@ import warnings
 #addresses listed for the property managers, if available.
 
 class Property(Base):
-    """SQL table to store info on property."""
+    """SQL table to store info on a property manager."""
     __table__ = "Property"
-
+    
     _id = Column(String(36), primary_key=True)
     name = Column(String, nullable=False)
     rating = Column(Integer)
     address = Column(String)
+    fees = Column(String)
     city = Column(String)
     state = Column(String(2), nullable=False)
     zipcode = Column(String(5))
@@ -28,11 +30,15 @@ class Property(Base):
     monthlyfees = Column(String)
     onetimefees = Column(String)
     companykey = Column(String)
-    accessed = Column(DateTime, default=
+    accessed = Column(DateTime)
+
+
+    def __repr__(self):
+        return f"<Property(name='{self.name}', city='{self.city}', state='{self.state}')>"
 
     
 class Listing(Base):
-    """SQL table to store scraped data."""
+    """SQL table to store info on a listing."""
     __tablename__ = "Listing"
     
     _id = Column(String(36), primary_key=True)
@@ -40,55 +46,50 @@ class Listing(Base):
     rentalkey = Column(String)
     model = Column(String)
 
-    propertyid = Column(Integer, ForeignKey("Property._id"))
+    propertyid = Column(String, ForeignKey("Property._id"))
     fees = Column(String)
     accessed = Column(DateTime)
     bathroom = Column(Integer)
     bedroom = Column(Integer) #0 corresponds to a studio apartment
     deposit = Column(Integer)
     rent = Column(Integer)
-    minprice = Column(Integer)
-    maxprice = Column(Integer)
+    minrent = Column(Integer)
+    maxrent = Column(Integer)
     sqft = Column(Integer)
     
 
     def __repr__(self):
-        return f"<Listing(='{self._id}', )>"
+        return f"<Listing(_id='{self._id}', accessed='{self.accessed}')>"
     
 
-def makesession(engine=None):
-    """Returns sqlalchemy.Session object."""
-    if engine is None:
-        warnings.warn("You must later call Session.configure(bind=engine).")
-        return sessionmaker()
-    return sessionmaker(bind=engine)
+if __name__ == "__main__":
+    engine = sqlalchemy.create_engine(f"sqlite:///{dbname}", echo=echo,
+                                      encoding="utf-8")
+    Base.metadata.create_all(bind=engine)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    metadata = MetaData()
 
 
-def examplequery(session):
-    #Returns first row from example query from session.
-
-    #Listing class, not the tablename.
-    firstlisting = session.query(Listing).filter_by(city="Austin",
-                                                    state="TX").first()
-    #firstlisting IS the instance of Listing that we stored to begin with
-
-    #not yet committed.
-    #session.new gives IdentitySet of 
+    #Users will want to look things up based on characteristics, but I
+    #just want to check property name, _id.
+    propertytable = Table("Property", metadata,
+                          Column("_id", String(36), primary_key=True),
+                          Column("name", String, nullable=False),
+                          Column("rating", Integer),
+                          Column("address", String),
+                          Column("fees", String),
+                          Column("city", String),
+                          Column("state", String(2), nullable=False),
+                          Column("zipcode", String(5)),
+                          Column("url", String),
+                          Column("monthlyfees", String),
+                          Column("onetimefees", String),
+                          Column("companykey", String),
+                          Column("accessed", DateTime),
+                          Index("idx_propertyname", "name"),
+                          Index("idx_property_id", "_id"))
+                          
+                          
     
-
-def main(dbname):
-    session.add(new_listing)
-    #the transaction is pending, nothing has been done to the database yet.
-    #session.add_all(#iterable of objects)
-    session.commit()
-
-    session.query(User).filter(User.name.in_(['Edwardo', 'fakeuser'])).all()
-    session.rollback()
-    for listing in session.query(Listing).order_by(Listing.city):
-        print(listing.state)
-
-    for listing in session.query(Listing.state, Listing.city).order_by(Listing.city):
-        print(listing.state)
-
-    session.close()
-
+    

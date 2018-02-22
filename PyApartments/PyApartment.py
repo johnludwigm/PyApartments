@@ -94,6 +94,14 @@ class PyApartment(object):
                                                ""]})
 
 
+    def createproperty(self, propertysoup=None, **propertykwargs):
+        """Returns a Property column in the Property table."""
+        if propertysoup is None:
+
+        else:
+            
+            
+
 #######################################
 #Apply to the results page of a search#
 #######################################
