@@ -16,7 +16,7 @@ def cleantext(text):
 
 class PyApartment(object):
     
-    def __init__(self, url=None, session=None):
+    def __init__(self, session=None):
         if session is None:
             self.session = requests.Session()
 
@@ -25,17 +25,12 @@ class PyApartment(object):
         self.searchresultsoup = None
         self.propertysoup = None
         
-        if url is not None:
-            self.searchresultsoup = BS(self.get(url), "html.parser")
-        else:
-            self.searchresultsoup = None
-
 
     def getsearchurls(self, zipcode):
         """Generator yielding URLs for apartments.com search results.
         :param zipcode: String ZIP code
         """
-        searchurl = baseurl + commons.urlextension(zipcode)
+        searchurl = baseurl + commons.urlextension(zipcode, self.locationhandler)
         self.searchresultsoup = BS(self.get(searchurl), "html.parser")
         maxpage = getlastpagenum(self.searchresultsoup)
         yield from iterpages(searchurl, lastpagenum=maxpage)
@@ -115,6 +110,7 @@ def iterpages(url, lastpagenum=1):
     if lastpagenum == 1:
         yield url
     else:
+        yield url
         for num in range(2, lastpagenum + 1):
             yield url + f"{num}/"
 

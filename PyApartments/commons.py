@@ -9,12 +9,12 @@ def utcstamp():
     return isofomrat(utcnow())
 
 
-def formaturl(zipcode):
+def urlextension(zipcode, locationhandler):
     """Returns URL extension for search results on apartments.com.
     :param zipcode: String ZIP code
     """
     zipcode = str(zipcode).zfill(5)
-    city, state = self.locationhandler.getcitystate(zipcode)
+    city, state = locationhandler.getcitystate(zipcode)
     citycomponent = city.lower().replace(" ", "-")
     urlextension = f"{citycomponent}-{state}-{zipcode}/"
     return urlextension
