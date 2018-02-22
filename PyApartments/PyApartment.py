@@ -1,7 +1,7 @@
 #import DBHandler
 import LocationHandler
 from bs4 import BeautifulSoup as BS
-import datecommons
+import commons
 import requests
 from html import unescape
 import re
@@ -11,7 +11,7 @@ def cleantext(text):
     return unescape(text).strip()
 
 
-baseURL = "https://www.apartments.com/"
+baseurl = "https://www.apartments.com/"
 
 class PyApartment(object):
     
@@ -28,21 +28,28 @@ class PyApartment(object):
             self.searchresultsoup = BS(self.get(url), "html.parser")
         else:
             self.searchresultsoup = None
-        
+
+
+    def getsearchurls(self, zipcode):
+        """Generator yielding URLs for apartments.com search results.
+        :param zipcode: String ZIP code
+        """
+        searchurl = baseurl + commons.urlextension
+        self.searchresultsoup = BS(self.get(searchurl), "html.parser")
+        maxpage = getlastpagenum(self.searchresultsoup)
+        yield from iterpages(searchurl, lastpagenum=maxpage)
+
         
     def getsearchresults(self, zipcode):
-        """Yields search results (properties, not property pages)
-        when given a zipcode.
+        """
         :param zipcode:
         """
-        zipcode = str(zipcode).zfill(5)
-        city, state = self.locationhandler.getcitystate(zipcode)
-        citycomponent = city.lower().replace(" ", "-")
-        urlextension = f"{citycomponent}-{state}-{zipcode}/"
-        searchurl = baseURL + urlextension
+        
         self.soup = BS(self.get(searchurl), "html.parser")
         if self.soup is None:
-            raise Exception(f"Trouble with ZIP code: {zipcode}, {city}, {state}")             
+            raise Exception(f"Trouble with ZIP code: {zipcode}, {city}, {state}")
+
+        
 
 
     def get(self, url, html=True, content=False):
