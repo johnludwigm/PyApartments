@@ -6,12 +6,13 @@ import requests
 from html import unescape
 import re
 
+baseurl = "https://www.apartments.com/"
+
+
 def cleantext(text):
     """Returns stripped, unescaped text."""
     return unescape(text).strip()
 
-
-baseurl = "https://www.apartments.com/"
 
 class PyApartment(object):
     
@@ -34,22 +35,19 @@ class PyApartment(object):
         """Generator yielding URLs for apartments.com search results.
         :param zipcode: String ZIP code
         """
-        searchurl = baseurl + commons.urlextension
+        searchurl = baseurl + commons.urlextension(zipcode)
         self.searchresultsoup = BS(self.get(searchurl), "html.parser")
         maxpage = getlastpagenum(self.searchresultsoup)
         yield from iterpages(searchurl, lastpagenum=maxpage)
 
         
     def getsearchresults(self, zipcode):
+        """Generator yielding property tags when given a zipcode.
+        :param zipcode: String ZIP code
         """
-        :param zipcode:
-        """
-        
-        self.soup = BS(self.get(searchurl), "html.parser")
-        if self.soup is None:
-            raise Exception(f"Trouble with ZIP code: {zipcode}, {city}, {state}")
-
-        
+        for searchresultsurl in self.getsearchurls(zipcode):
+            self.searchresultssoup = BS(searchresultsurl, "html.parser")
+            yield from getproperties(self.searchresultssoup)
 
 
     def get(self, url, html=True, content=False):
@@ -124,7 +122,7 @@ def iterpages(url, lastpagenum=1):
 searchpropertyattrs = {"class": True, "data-listingid": True, "data-url": True}
 def getproperties(searchresultsoup):
     """Generator yielding properties on a given search results page."""
-    results = searchresultsoup.find_all("article", attrs=searchpropertyattrs)
+    results = iter(searchresultsoup.find_all("article", attrs=searchpropertyattrs))
     yield from results
 
                      
