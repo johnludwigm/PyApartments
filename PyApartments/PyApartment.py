@@ -41,7 +41,7 @@ class PyApartment(object):
         :param zipcode: String ZIP code
         """
         for searchresultsurl in self.getsearchurls(zipcode):
-            self.searchresultssoup = BS(searchresultsurl, "html.parser")
+            self.searchresultssoup = BS(self.get(searchresultsurl), "html.parser")
             yield from getproperties(self.searchresultssoup)
 
 
@@ -175,12 +175,18 @@ urlattrs = {"class": True, "href": True, "title": True}
 def getpropertyurl(articletag):
     """Returns string URL for a property."""
     tag = articletag.find("a", attrs=urlattrs)
-    return cleantext(tag["href"])
+    try:
+        return cleantext(tag["href"])
+    except KeyError:
+        return None
 
 
 def getcompanykey(articletag):
     """Returns string companykey."""
-    return articletag["data-ck"]
+    try:
+        return articletag["data-ck"]
+    except KeyError:
+        return None
 
     
 propertynameattrs = {"itemprop": "name", "content": True}
