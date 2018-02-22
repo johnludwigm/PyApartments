@@ -10,11 +10,10 @@ class LocationHandler(object):
         self.cursor = self.connection.cursor()
 
 
-    def getcities(self, **kwargs):
-        querypieces = []
-        for key, value in filter(lambda x, y: y is not None, kwargs.items()):
-            querypieces.append((key, value))
-        if querypieces == []:
-            raise Exception("No kwargs given.")
-        query = f"SELECT city FROM Location WHERE 
-        return sorted(tuple(self.execute("SELECT * FROM Location
+    def getcitystate(self, zipcode):
+        """Generator yielding (city, stateabbr) tuples.
+        :param zipcode: String, ZIP code of desired location
+        """
+        query = "SELECT city, stateabbr FROM Location WHERE zipcode=?;"
+        self.cursor.execute(query, (zipcode, ))
+        return self.cursor.fetchone()

@@ -34,7 +34,7 @@ class Listing(Base):
     """SQL table to store scraped data."""
     __tablename__ = "Listing"
 
-    _id = Column(String, primary_key=True)
+    rentalkey = Column(String, primary_key=True)
     model = Column(String)
     availability = Column(String)
     propertyid = Column(Integer, ForeignKey("Property._id"))
@@ -43,7 +43,6 @@ class Listing(Base):
     bathroom = Column(Integer)
     bedroom = Column(Integer) #0 corresponds to a studio apartment
     deposit = Column(Integer)
-    rentalkey = Column(String)
     rent = Column(Integer)
     minprice = Column(Integer)
     maxprice = Column(Integer)
@@ -85,7 +84,7 @@ def main(dbname):
 
     session = makesession(engine)
     
-    new_listing = Listing(_id = 123, rent = 1000)
+    new_listing = Listing( = 123, rent = 1000)
     session.add(new_listing)
     #the transaction is pending, nothing has been done to the database yet.
     #session.add_all(#iterable of objects)

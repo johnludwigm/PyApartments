@@ -1,4 +1,5 @@
 #import DBHandler
+import LocationHandler
 from bs4 import BeautifulSoup as BS
 import datecommons
 import requests
@@ -11,34 +12,37 @@ def cleantext(text):
 
 
 baseURL = "https://www.apartments.com/"
-#zipcode < state < city
+
 class PyApartment(object):
     
     def __init__(self, url=None, session=None):
         if session is None:
             self.session = requests.Session()
 
-        if url is not None:
-            self.soup = BS(self.get(url), "html.parser")
-        else:
-            self.soup = None
-        self.url = url
+        self.locationhandler = LocationHandler.LocationHandler()
 
+        self.searchresultsoup = None
+        self.propertysoup = None
         
-    def getlistings(self, **kwargs):
-        """Get listings given specifications.
-        :param bathrooms: Integer number of bathrooms (1 - 3; 3 = 3+)
-        :param bedrooms: Integer or String, number of bedrooms
-        ("studio" or 1 - 4; 4 = 4+)
-        :param city: String city name
-        :param maxprice: Integer max price
-        :param minprice: Integer min price
-        :param state: String state abbreviation ("TX" good, "Texas" bad)
+        if url is not None:
+            self.searchresultsoup = BS(self.get(url), "html.parser")
+        else:
+            self.searchresultsoup = None
+        
+        
+    def getsearchresults(self, zipcode):
+        """Yields search results (properties, not property pages)
+        when given a zipcode.
+        :param zipcode:
         """
-        self.soup = BS(self.get(url), "html.parser")
+        zipcode = str(zipcode).zfill(5)
+        city, state = self.locationhandler.getcitystate(zipcode)
+        citycomponent = city.lower().replace(" ", "-")
+        urlextension = f"{citycomponent}-{state}-{zipcode}/"
+        searchurl = baseURL + urlextension
+        self.soup = BS(self.get(searchurl), "html.parser")
         if self.soup is None:
-            return None
-               
+            raise Exception(f"Trouble with ZIP code: {zipcode}, {city}, {state}")             
 
 
     def get(self, url, html=True, content=False):
@@ -47,13 +51,11 @@ class PyApartment(object):
             raise Exception("Either HTML text OR content may be returned.")
         try:
             result = self.session.get(url)
-            self.url = result.url
         except Exception as exc:
             print(exc)
             self.session = requests.Session()
             try:
                 result = self.session.get(url)
-                self.url = result.url
             except:
                 raise Exception("Cannot resolve requests.Session object.")
         if html:
@@ -164,16 +166,22 @@ def getpropertydescription(propertysoup):
         return cleantext(descriptiontag.text)
     return None
 
-
+    
 #######################
 #Apply to article tags#
 #######################
 urlattrs = {"class": True, "href": True, "title": True}
 def getpropertyurl(articletag):
+    """Returns string URL for a property."""
     tag = articletag.find("a", attrs=urlattrs)
     return cleantext(tag["href"])
 
 
+def getcompanykey(articletag):
+    """Returns string companykey."""
+    return articletag["data-ck"]
+
+    
 propertynameattrs = {"itemprop": "name", "content": True}
 def getpropertyname(articletag):
     """Return name of the property."""

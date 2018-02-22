@@ -35,7 +35,7 @@ def getrent(tablerowsoup):
     
 
 sqftattrs = {"class": "sqft"}
-def getsqft(tablerowsoup):
+def getsqft(tablerowsoup)
     """Returns int number of square feet for listing."""
     sqfttag = tablerowsoup.find("td", attrs=sqftattrs)
     content = sqfttag.text
