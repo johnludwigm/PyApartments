@@ -29,8 +29,20 @@ class PyApartment(object):
         self.locationhandler = LocationHandler.LocationHandler()
 
         self.searchresultsoup = None
-        self.propertysoup = None
-        
+
+
+    def executesearch(self, zipcode):
+        """Executes search, adds resulting Property and Listing objects
+        to sqlsession."""
+        for articletag in self.getarticletags(zipcode):
+            ah = self.createarticlehandler(articletag)
+            propertysoup = BS(self.get(ah.url), "html.parser")
+            ph = self.createpropertyhandler(ah, propertysoup)
+            self.sqlsession.add(ph.createproperty())
+            for tablerowtag in self.gettablerowtags(propertysoup):
+                lh = self.createlistinghandler(ph, tablerowtag)
+                self.sqlsession.add(lh.createlisting())
+            
 
     def getsearchurls(self, zipcode):
         """Generator yielding URLs for apartments.com search results.
@@ -42,8 +54,8 @@ class PyApartment(object):
         yield from iterpages(searchurl, lastpagenum=maxpage)
 
         
-    def getsearchresults(self, zipcode):
-        """Generator yielding property tags when given a zipcode.
+    def getarticletags(self, zipcode):
+        """Generator yielding article tags when given a zipcode.
         :param zipcode: String ZIP code
         """
         for searchresultsurl in self.getsearchurls(zipcode):
@@ -51,6 +63,28 @@ class PyApartment(object):
             yield from getproperties(self.searchresultssoup)
 
 
+    def createarticlehandler(self, articletag):
+        """Returns an ArticleHandler."""
+        return articlehandler.ArticleHandler(articletag)
+
+
+    def gettablerowtags(self, propertysoup):
+        """Generator yielding tablerow tags.
+        :param propertysoup: bs4.BeautifulSoup for the property page
+        """
+        yield from propertysoup.find_all("tr", attrs=listingattrs)
+
+    
+    def createpropertyhandler(self, ArticleHandler, propertysoup):
+        """Returns a PropertyHandler object."""
+        return propertyhandler.PropertyHandler(propertysoup, ArticleHandler)
+    
+            
+    def createlistinghandler(self, PropertyHandler, tablerowtag):
+        """Returns a ListingHandler object."""
+        return listinghandler.ListingHandler(PropertyHandler, tablerowtag)
+
+        
     def get(self, url, html=True, content=False):
         """Handles self.session and returns data from desired URL."""
         if html and content:
@@ -70,35 +104,10 @@ class PyApartment(object):
             return result.content
 
 
-    def getpropertyinfo(self, propertysoup, timestamp=True):
-        """Returns property information given a property page.
-        :param timestamp: Boolean, if True, then the property information
-        will be updated with current information and timestamped.
-        """
-        
-        
+    def getsoup(self, url):
+        """Returns bs4 soup object representing url."""
+        return BS(self.get(url), "html.parser")
 
-    def getlistings(self, propertysoup, propertytable):
-        """Generator yielding SQLAlchemy Listing objects.
-        :param propertysoup: bs4.BeautifulSoup for the property page
-        :param propertytable: SQLAlchemy Property record.
-        """
-        yield from propertysoup.find_all("tr", attrs=listingattrs)
-
-
-    def createproperty(self, ArticleHandler):
-        """Returns a Property row object."""
-        if propertysoup is None:
-            raise Exception("propertysoup not set.")
-        ph = propertyhandler.PropertyHandler(self.propertysoup,
-                                             **vars(ArticleHandler))
-        return ph.createproperty()
-    
-            
-    def createlisting(self, tablerowsoup=None, **listingkwargs):
-        """Returns a Listing row object."""
-        if tablerowsoup is None:
-            return 
 
 #######################################
 #Apply to the results page of a search#
@@ -125,6 +134,7 @@ def iterpages(url, lastpagenum=1):
 
 searchpropertyattrs = {"class": True, "data-listingid": True, "data-url": True}
 def getproperties(searchresultsoup):
-    """Generator yielding properties on a given search results page."""
-    results = iter(searchresultsoup.find_all("article", attrs=searchpropertyattrs))
+    """Generator yielding property article tags from a given search results page."""
+    results = iter(searchresultsoup.find_all("article",
+                                             attrs=searchpropertyattrs))
     yield from results

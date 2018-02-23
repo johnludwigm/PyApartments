@@ -3,7 +3,18 @@
 #######################
 
 class ArticleHandler(object):
-    __slots__ = ("
+    __slots__ = ("address", "city", "companykey", "name",
+                 "phone", "state", "url", "zipcode")
+
+
+    def __init__(self, articletag):
+        for key, value in getpropertyaddress(articletag).items():
+            setattr(self, key, value)
+        self.url = getpropertyurl(articletag)
+        self.phone = getphonenumber(articletag)
+        self.name = getpropertyname(articletag)
+        self.companykey = getcompanykey(articletag)
+            
 
 urlattrs = {"class": True, "href": True, "title": True}
 def getpropertyurl(articletag):

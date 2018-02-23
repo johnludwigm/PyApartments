@@ -51,7 +51,7 @@ class Listing(Base):
     availability = Column(String)
     rentalkey = Column(String)
     model = Column(String)
-    propertyid = Column(String, ForeignKey("Property._id"))
+    property_id = Column(String, ForeignKey("Property._id"))
     fees = Column(String)
     accessed = Column(DateTime)
     bathrooms = Column(Integer)
