@@ -6,7 +6,7 @@ import commons
 import requests
 from html import unescape
 import re
-import uuid
+
 baseurl = "https://www.apartments.com/"
 
 
@@ -14,10 +14,6 @@ def cleantext(text):
     """Returns stripped, unescaped text."""
     return unescape(text).strip()
 
-
-def uuid4():
-    """Returns uuid.uuid4 object as string."""
-    return str(uuid.uuid4())
 
 listingattrs = {"class": ["rentalGridRow", "hideOnCollapsed", ""]}
 class PyApartment(object):
@@ -80,13 +76,6 @@ class PyApartment(object):
         will be updated with current information and timestamped.
         """
         
-        propertyname = getpropertyname(soup)
-        address = getpropertyaddress(soup)
-        
-        getallfees(propertysoup)
-        getpropertydescription(soup)
-        if timestamp:
-            accesstime = datecommons.utcstamp()
         
 
     def getlistings(self, propertysoup, propertytable):
@@ -97,10 +86,14 @@ class PyApartment(object):
         yield from propertysoup.find_all("tr", attrs=listingattrs)
 
 
-    def createproperty(self, propertysoup=None, **propertykwargs):
+    def createproperty(self, ArticleHandler):
         """Returns a Property row object."""
         if propertysoup is None:
-            pass
+            raise Exception("propertysoup not set.")
+        ph = propertyhandler.PropertyHandler(self.propertysoup,
+                                             **vars(ArticleHandler))
+        return ph.createproperty()
+    
             
     def createlisting(self, tablerowsoup=None, **listingkwargs):
         """Returns a Listing row object."""

@@ -1,13 +1,8 @@
 
 import datetime
+import uuid
 
 utcnow = datetime.datetime.utcnow
-isoformat = datetime.datetime.isoformat
-
-def utcstamp():
-    """Returns string UTC-formatted timestamp."""
-    return isoformat(utcnow())
-
 
 def urlextension(zipcode, locationhandler):
     """Returns URL extension for search results on apartments.com.
@@ -18,3 +13,13 @@ def urlextension(zipcode, locationhandler):
     citycomponent = city.lower().replace(" ", "-")
     urlextension = f"{citycomponent}-{state}-{zipcode}/"
     return urlextension
+
+
+def timestamp():
+    """Returns datetime.datetime object, UTC timestamp."""
+    return utcnow()
+
+
+def uuid4():
+    """Returns uuid.uuid4 object as string."""
+    return str(uuid.uuid4())

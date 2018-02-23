@@ -20,7 +20,7 @@ Base = declarative_base()
 
 class Property(Base):
     """SQL table to store info on a property manager."""
-    __table__ = "Property"
+    __tablename__ = "Property"
     
     _id = Column(String(36), primary_key=True)
     name = Column(String, nullable=False)
@@ -35,6 +35,8 @@ class Property(Base):
     onetimefees = Column(String, default=None)
     companykey = Column(String, default=None)
     accessed = Column(DateTime, default=None)
+    phone = Column(String(10), default=None)
+    description = Column(String, default=None)
 
 
     def __repr__(self):
@@ -92,6 +94,8 @@ def createdb(dbname, echo=False):
                           Column("onetimefees", String),
                           Column("companykey", String),
                           Column("accessed", DateTime),
+                          Column("phone", String(10)),
+                          Column("description", String),
                           Index("idx_propertyname", "name"),
                           Index("idx_property_id", "_id"))
     listingtable = Table("Listing", metadata,

@@ -1,21 +1,34 @@
 #########################
 #Apply to property pages#
 #########################
+import commons
+import DBHandler
 
-
+articleproperties = ("address", "city", "state", "zip",
+                     "phone", "name", "companykey", "url")
 class PropertyHandler(object):
-    __
+    __slots__ = ("_id", "accessed", "address", "city", "companykey",
+                 "description", "fees", "monthlyfees", "name", "onetimefees",
+                 "phone", "rating", "state", "url", "zipcode")
+    
 
-    def __init__(self, propertysoup, _id=None):
+    def __init__(self, propertysoup, _id=None, **kwargs):
         self.propertysoup = propertysoup
 
-        self.address = 
-        self.fees = getfees(self.propertysoup)
-
+        for key in articleproperties:
+            setattr(self, key, kwargs.get(key, default=None))
+        
+        self.fees = getallfees(self.propertysoup)
+        self.description = getpropertydescription(self.propertysoup)
+        
 
     def createproperty(self):
         """Returns property object for SQLAlchemy."""
-
+        if self._id is None:
+            self._id = commons.uuid4()
+        self.accessed = commons.timestamp()
+        return DBHandler.Property(**{key: getattr(self, key, default=None)
+                                     for key in self.__slots__})
 
     
 onetimefeesattrs = {"class": "oneTimeFees"}
@@ -47,7 +60,6 @@ def getallfees(propertysoup):
     """Returns dictionary of one time fees and monthly fees."""
     onetimefees_tag = propertysoup.find('div', attrs=onetimefeesattrs)       
     monthlyfees_tag = propertysoup.find("div", attrs=monthlyfeesattrs)
-
     return {"onetimefees": getfees(onetimefees_tag),
             "monthlyfees": getfees(monthlyfees_tag)}
 

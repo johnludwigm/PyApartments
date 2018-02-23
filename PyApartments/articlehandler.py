@@ -2,6 +2,8 @@
 #Apply to article tags#
 #######################
 
+class ArticleHandler(object):
+    __slots__ = ("
 
 urlattrs = {"class": True, "href": True, "title": True}
 def getpropertyurl(articletag):
