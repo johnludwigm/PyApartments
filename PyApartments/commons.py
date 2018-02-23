@@ -1,8 +1,15 @@
 
 import datetime
 import uuid
+from html import unescape
 
 utcnow = datetime.datetime.utcnow
+
+
+def cleantext(text):
+    """Returns stripped, unescaped text."""
+    return unescape(text).strip()
+
 
 def urlextension(zipcode, locationhandler):
     """Returns URL extension for search results on apartments.com.

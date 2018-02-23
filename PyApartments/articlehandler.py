@@ -1,11 +1,11 @@
 #######################
 #Apply to article tags#
 #######################
-
+import re
+import commons
 class ArticleHandler(object):
     __slots__ = ("address", "city", "companykey", "name",
                  "phone", "state", "url", "zipcode")
-
 
     def __init__(self, articletag):
         for key, value in getpropertyaddress(articletag).items():
@@ -21,7 +21,7 @@ def getpropertyurl(articletag):
     """Returns string URL for a property."""
     tag = articletag.find("a", attrs=urlattrs)
     try:
-        return cleantext(tag["href"])
+        return commons.cleantext(tag["href"])
     except KeyError:
         return None
 
@@ -38,7 +38,7 @@ propertynameattrs = {"itemprop": "name", "content": True}
 def getpropertyname(articletag):
     """Return name of the property."""
     tag = articletag.find("meta", attrs=propertynameattrs)
-    name = cleantext(tag["content"])
+    name = commons.cleantext(tag["content"])
     return name if name != "" else None
 
 
@@ -54,16 +54,16 @@ def getpropertyaddress(articletag):
      "zipcode, zipcode"}
     """
     addresstag = articletag.find("meta", attrs=addressattrs)
-    address = cleantext(addresstag["content"])
+    address = commons.cleantext(addresstag["content"])
 
     citytag = articletag.find("meta", attrs=cityattrs)
-    city = cleantext(citytag["content"])
+    city = commons.cleantext(citytag["content"])
     
     regiontag = articletag.find("meta", attrs=regionattrs)
-    state = cleantext(regiontag["content"])
+    state = commons.cleantext(regiontag["content"])
 
     zipcodetag = articletag.find("meta", attrs=zipcodeattrs)
-    zipcode = cleantext(zipcodetag["content"])
+    zipcode = commons.cleantext(zipcodetag["content"])
     return {"address": address, "city": city,
             "state": state, "zipcode": zipcode}
 
@@ -83,4 +83,4 @@ def getphonenumber(articletag):
     if span is None:
         return None
     else:
-        return cleantext(span[0]).replace("-")
+        return commons.cleantext(span[0]).replace("-", "")

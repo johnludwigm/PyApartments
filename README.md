@@ -12,3 +12,4 @@ Apartments.com API for Python. Originating as scraper.
 
 
 * Also might want to just collect a list of properties and periodically check their listings.
+

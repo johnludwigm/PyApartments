@@ -11,8 +11,9 @@ class PropertyHandler(object):
     
 
     def __init__(self, ArticleHandler, propertysoup, _id=None):
+        self._id = _id
         for key in ArticleHandler.__slots__:
-            setattr(self, key, getattr(ArticleHandler, key, default=None))
+            setattr(self, key, getattr(ArticleHandler, key, None))
         
         self.fees = getallfees(propertysoup)
         self.description = getpropertydescription(propertysoup)
@@ -23,7 +24,7 @@ class PropertyHandler(object):
         if self._id is None:
             self._id = commons.uuid4()
         self.accessed = commons.timestamp()
-        return DBHandler.Property(**{key: getattr(self, key, default=None)
+        return DBHandler.Property(**{key: getattr(self, key, None)
                                      for key in self.__slots__})
 
     
@@ -44,8 +45,8 @@ def getfees(fees_tag):
     iterfees = iter(individualfees)
     while True:
         try:
-            description = cleantext(next(iterfees).text)
-            price = cleantext(next(iterfees).text)
+            description = commons.cleantext(next(iterfees).text)
+            price = commons.cleantext(next(iterfees).text)
             fees.append(f"{description}: {price}")
         except StopIteration:
             break
@@ -65,5 +66,5 @@ def getpropertydescription(propertysoup):
     """Get the description for the property."""
     descriptiontag = propertysoup.find("p", attrs=descriptionattrs)
     if descriptiontag is not None:
-        return cleantext(descriptiontag.text)
+        return commons.cleantext(descriptiontag.text)
     return None

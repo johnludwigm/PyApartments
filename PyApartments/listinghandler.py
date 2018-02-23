@@ -21,7 +21,7 @@ class ListingHandler(object):
 
     def createlisting(self):
         """Returns Listing object for SQLAlchemy."""
-        if self.._id is None:
+        if self._id is None:
             self._id = commons.uuid4()
         self.accessed = commons.timestamp()
         return DBHandler.Listing(**{key: getattr(self, key, default=None)
@@ -57,7 +57,7 @@ def getrent(tablerowtag):
     
 
 sqftattrs = {"class": "sqft"}
-def getsqft(tablerowtag)
+def getsqft(tablerowtag):
     """Returns int number of square feet for listing."""
     sqfttag = tablerowtag.find("td", attrs=sqftattrs)
     content = sqfttag.text
@@ -108,7 +108,7 @@ def getdata(tablerowtag):
      sqft, int,
      unit: str}     
     """
-    returndict = {"bathrooms": int(tablerowtag["data-baths"]),
+    returndict = {"bathrooms": int(float(tablerowtag["data-baths"])),
                   "bedrooms": int(tablerowtag["data-beds"]),
                   "model": tablerowtag["data-model"],
                   "rentalkey": tablerowtag["data-rentalkey"]}

@@ -1,18 +1,12 @@
-import listinghandler
-import propertyhandler
-import LocationHandler
-from bs4 import BeautifulSoup as BS
+import articlehandler
 import commons
+import listinghandler
+import LocationHandler
+import propertyhandler
 import requests
-from html import unescape
-import re
+from bs4 import BeautifulSoup as BS
 
 baseurl = "https://www.apartments.com/"
-
-
-def cleantext(text):
-    """Returns stripped, unescaped text."""
-    return unescape(text).strip()
 
 
 listingattrs = {"class": ["rentalGridRow", "hideOnCollapsed", ""]}
@@ -25,9 +19,12 @@ class PyApartment(object):
         """
         if session is None:
             self.session = requests.Session()
-
+        if sqlsession is None:
+            raise Exception("No SQLAlchemy.session provided")
+        else:
+            self.sqlsession = sqlsession
+        
         self.locationhandler = LocationHandler.LocationHandler()
-
         self.searchresultsoup = None
 
 
@@ -77,7 +74,7 @@ class PyApartment(object):
     
     def createpropertyhandler(self, ArticleHandler, propertysoup):
         """Returns a PropertyHandler object."""
-        return propertyhandler.PropertyHandler(propertysoup, ArticleHandler)
+        return propertyhandler.PropertyHandler(ArticleHandler, propertysoup)
     
             
     def createlistinghandler(self, PropertyHandler, tablerowtag):

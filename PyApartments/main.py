@@ -1,5 +1,6 @@
 
 import os
+import PyApartment
 import sqlalchemy
 
 
@@ -11,37 +12,16 @@ def main(dbname="apartmentlistings.db", echo=False, zipcode=None):
     """
     if zipcode is None:
         return
-    
-    if not os.path.exists(dbname):
-        createdb(os.path.abspath(dbname))
-    
-    Base = declarative_base()
 
-    session = makesession(engine)
-
-    session.close()
-
-
-def makesession(engine=None):
-    """Returns sqlalchemy.Session object."""
-    if engine is None:
-        warnings.warn("You must later call Session.configure(bind=engine).")
-        return sessionmaker()
-    return sessionmaker(bind=engine)
-    
-
-def main(dbname):
-    session.add(new_listing)
-    #the transaction is pending, nothing has been done to the database yet.
-    #session.add_all(#iterable of objects)
+    engine = sqlalchemy.create_engine(f"sqlite:///{dbname}", echo=False)
+    Session = sqlalchemy.orm.sessionmaker(bind=engine)
+    session = Session()
+    pyapt = PyApartment.PyApartment(sqlsession=session)
+    pyapt.executesearch(zipcode)
     session.commit()
-
-    session.query(User).filter(User.name.in_(['Edwardo', 'fakeuser'])).all()
-    session.rollback()
-    for listing in session.query(Listing).order_by(Listing.city):
-        print(listing.state)
-
-    for listing in session.query(Listing.state, Listing.city).order_by(Listing.city):
-        print(listing.state)
-
     session.close()
+
+
+if __name__ = "__main__":
+    zipcode = input("Enter zipcode: ")
+    main(zipcode=zipcode)
