@@ -26,7 +26,6 @@ class Property(Base):
     name = Column(String, nullable=False)
     rating = Column(Integer, default=None)
     address = Column(String, default=None)
-    fees = Column(String, default=None)
     city = Column(String, nullable=False)
     state = Column(String(2), nullable=False)
     zipcode = Column(String(5), nullable=False)
@@ -35,8 +34,8 @@ class Property(Base):
     onetimefees = Column(String, default=None)
     companykey = Column(String, default=None)
     accessed = Column(DateTime, default=None)
-    phone = Column(String(10), default=None)
-    description = Column(String, default=None)
+    phone = Column(String, default=None)
+    #description = Column(String, default=None)
 
 
     def __repr__(self):
@@ -52,9 +51,8 @@ class Listing(Base):
     rentalkey = Column(String)
     model = Column(String)
     property_id = Column(String, ForeignKey("Property._id"))
-    fees = Column(String)
     accessed = Column(DateTime)
-    bathrooms = Column(Integer)
+    bathrooms = Column(String)
     bedrooms = Column(Integer) #0 corresponds to a studio apartment
     deposit = Column(Integer)
     rent = Column(Integer)
@@ -85,7 +83,6 @@ def createdb(dbname, echo=False):
                           Column("name", String, nullable=False),
                           Column("rating", Integer),
                           Column("address", String),
-                          Column("fees", String),
                           Column("city", String),
                           Column("state", String(2), nullable=False),
                           Column("zipcode", String(5)),
@@ -94,10 +91,10 @@ def createdb(dbname, echo=False):
                           Column("onetimefees", String),
                           Column("companykey", String),
                           Column("accessed", DateTime),
-                          Column("phone", String(10)),
-                          Column("description", String),
+                          Column("phone", String),
                           Index("idx_propertyname", "name"),
                           Index("idx_property_id", "_id"))
+    
     listingtable = Table("Listing", metadata,
                          Column("_id", String(36), primary_key=True),
                          Column("availability", String),
@@ -105,9 +102,8 @@ def createdb(dbname, echo=False):
                          Column("model", String),
                          Column("property_id", String,
                                 ForeignKey("Property._id")),
-                         Column("fees", String),
                          Column("accessed", DateTime),
-                         Column("bathrooms", Integer),
+                         Column("bathrooms", String),
                          Column("bedrooms", Integer),
                          Column("deposit", Integer),
                          Column("rent", Integer),

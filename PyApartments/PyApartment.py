@@ -39,7 +39,8 @@ class PyApartment(object):
             for tablerowtag in self.gettablerowtags(propertysoup):
                 lh = self.createlistinghandler(ph, tablerowtag)
                 self.sqlsession.add(lh.createlisting())
-            
+            self.sqlsession.commit()
+
 
     def getsearchurls(self, zipcode):
         """Generator yielding URLs for apartments.com search results.
@@ -135,3 +136,22 @@ def getproperties(searchresultsoup):
     results = iter(searchresultsoup.find_all("article",
                                              attrs=searchpropertyattrs))
     yield from results
+
+
+if __name__ == "__main__":
+    import sqlalchemy
+    import os
+    p = os.path.abspath("apartmentlistings.db")
+    engine = sqlalchemy.create_engine(f"sqlite:///{p}", echo=False)
+    Session = sqlalchemy.orm.sessionmaker(bind=engine)
+    sqlsession = Session()
+    pyapt = PyApartment(sqlsession=sqlsession)
+    #pyapt.executesearch("78701")
+    l = list(pyapt.getarticletags("78701"))
+    ah = pyapt.createarticlehandler(l[0])
+    propsoup = BS(pyapt.get(ah.url), "html.parser")
+    ph = pyapt.createpropertyhandler(ah, propsoup)
+    propitem = ph.createproperty()
+    sqlsession.add(propitem)
+    sqlsession.commit()
+	  

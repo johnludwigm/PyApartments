@@ -79,6 +79,8 @@ def getphonenumber(articletag):
     Phone number is returned as 10 digits, no dashes or parentheses...
     """
     phonetag = articletag.find("div", attrs=phoneattrs)
+    if phonetag is None:
+        return None
     span = list(filter(helper, phonetag.descendants))
     if span is None:
         return None

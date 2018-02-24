@@ -9,13 +9,15 @@ import DBHandler
 
 class ListingHandler(object):
     __slots__ = ("_id", "accessed", "availability", "bathrooms", "bedrooms",
-                 "deposit", "fees", "maxrent", "minrent", "model",
+                 "deposit",
+                 #"fees",
+                 "maxrent", "minrent", "model",
                  "rent", "rentalkey", "property_id", "sqft")
 
     def __init__(self, PropertyHandler, tablerowtag):
         properties = getdata(tablerowtag)
         for key in self.__slots__:
-            setattr(self, key, properties.get(key, default=None))
+            setattr(self, key, properties.get(key, None))
         self.property_id = PropertyHandler._id       
 
 
@@ -24,8 +26,8 @@ class ListingHandler(object):
         if self._id is None:
             self._id = commons.uuid4()
         self.accessed = commons.timestamp()
-        return DBHandler.Listing(**{key: getattr(self, key, default=None)
-                                     for key in self.__slots__})
+        return DBHandler.Listing(**{key: getattr(self, key, None)
+                                    for key in self.__slots__})
 
 
 numberpattern = re.compile("[\d,]+")
@@ -108,7 +110,7 @@ def getdata(tablerowtag):
      sqft, int,
      unit: str}     
     """
-    returndict = {"bathrooms": int(float(tablerowtag["data-baths"])),
+    returndict = {"bathrooms": tablerowtag["data-baths"].strip(),
                   "bedrooms": int(tablerowtag["data-beds"]),
                   "model": tablerowtag["data-model"],
                   "rentalkey": tablerowtag["data-rentalkey"]}
@@ -118,8 +120,10 @@ def getdata(tablerowtag):
     rent = getrent(tablerowtag)
     if len(rent) == 2:
         returndict["minrent"], returndict["maxrent"] = rent
-    else:
+    elif len(rent) == 1:
         returndict["rent"] = rent[0]
+    else:
+        returndict["rent"] = None
 
     returndict["sqft"] = getsqft(tablerowtag)[0]
     returndict["availability"] = getavailability(tablerowtag)

@@ -6,8 +6,12 @@ import DBHandler
 
 class PropertyHandler(object):
     __slots__ = ("_id", "accessed", "address", "city", "companykey",
-                 "description", "fees", "monthlyfees", "name", "onetimefees",
-                 "phone", "rating", "state", "url", "zipcode")
+                 #"description",
+                 #"fees",
+                 "monthlyfees", "name", "onetimefees",
+                 "phone",
+                 #"rating", Ratings are not accurate or consistentt
+                 "state", "url", "zipcode")
     
 
     def __init__(self, ArticleHandler, propertysoup, _id=None):
@@ -15,8 +19,8 @@ class PropertyHandler(object):
         for key in ArticleHandler.__slots__:
             setattr(self, key, getattr(ArticleHandler, key, None))
         
-        self.fees = getallfees(propertysoup)
-        self.description = getpropertydescription(propertysoup)
+        #self.fees = getallfees(propertysoup)
+        #self.description = getpropertydescription(propertysoup)
         
 
     def createproperty(self):
@@ -66,5 +70,10 @@ def getpropertydescription(propertysoup):
     """Get the description for the property."""
     descriptiontag = propertysoup.find("p", attrs=descriptionattrs)
     if descriptiontag is not None:
-        return commons.cleantext(descriptiontag.text)
+        description = commons.cleantext(descriptiontag.text)
+        if len(description) > 300:
+            return description[:297] + "..."
+        return description
     return None
+
+
