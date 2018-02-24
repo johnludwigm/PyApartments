@@ -117,9 +117,13 @@ def getlastpagenum(searchresultsoup):
     #would get 126 results, it would say <1 2 3 ... 6>. 25 results on each
     #of pages 1 (current), 2, 3, 4, and 5, but 1 result on page 6.
 
-    result = searchresultsoup.select("li div a")    
-    return max(int(tag["data-page"]) for tag in result
-               if not tag.has_attr("class"))
+    result = searchresultsoup.select("li div a")
+    maxpage = 1
+    #Cannot use max(comprehension) because args is sometimes empty
+    for tag in filter(lambda tag: tag.has_attr("class"), result):
+        if int(tag.get("data-page", 1)) > maxpage:
+            maxpage = int(tag.get("data-page", 1))
+    return maxpage
 
 
 def iterpages(url, lastpagenum=1):

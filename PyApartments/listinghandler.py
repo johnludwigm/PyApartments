@@ -79,6 +79,8 @@ depositattrs = {"class": ["deposit", ""]}
 def getdeposit(tablerowtag):
     """Returns integer deposit."""
     deposittag = tablerowtag.find("td", attrs=depositattrs)
+    if deposittag is None:
+        return None
     return resolvenumbers(deposittag.text.strip(" $"))[0]
 
 
@@ -87,6 +89,8 @@ unitattrs = {"class": "unit"}
 def getunit(tablerowtag):
     """Returns string identifying the listed unit."""
     unittag = tablerowtag.find("td", attrs=unitattrs)
+    if unittag is None:
+        return None
     returnstr = unittag.text.strip()
     return returnstr if returnstr != "" else None
 
@@ -110,13 +114,14 @@ def getdata(tablerowtag):
      sqft, int,
      unit: str}     
     """
-    returndict = {"bathrooms": tablerowtag["data-baths"].strip(),
-                  "bedrooms": int(tablerowtag["data-beds"]),
-                  "model": tablerowtag["data-model"],
-                  "rentalkey": tablerowtag["data-rentalkey"]}
 
-    
-    #maxrent = tablerowtag["data-maxrent"]
+    returndict = {"bathrooms": tablerowtag.get("data-baths", None),
+                  "bedrooms": int(tablerowtag.get("data-beds", -1)),
+                  "model": tablerowtag.get("data-model", None),
+                  "rentalkey": tablerowtag.get("data-rentalkey", None)}
+    if returndict["bedrooms"] == -1:
+        returndict["bedrooms"] = None
+
     rent = getrent(tablerowtag)
     if len(rent) == 2:
         returndict["minrent"], returndict["maxrent"] = rent
@@ -129,4 +134,8 @@ def getdata(tablerowtag):
     returndict["availability"] = getavailability(tablerowtag)
     returndict["unit"] = getunit(tablerowtag)
     returndict["deposit"] = getdeposit(tablerowtag)
+
+    for key, val in returndict.items():
+        if isinstance(val, str):
+            returndict[key] = val.strip()
     return returndict

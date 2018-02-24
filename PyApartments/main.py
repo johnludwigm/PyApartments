@@ -22,6 +22,6 @@ def main(dbname="apartmentlistings.db", echo=False, zipcode=None):
     session.close()
 
 
-if __name__ = "__main__":
+if __name__ == "__main__":
     zipcode = input("Enter zipcode: ")
     main(zipcode=zipcode)
