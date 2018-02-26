@@ -152,10 +152,12 @@ if __name__ == "__main__":
     pyapt = PyApartment(sqlsession=sqlsession)
     #pyapt.executesearch("78701")
     l = list(pyapt.getarticletags("78701"))
+    
     ah = pyapt.createarticlehandler(l[0])
     propsoup = BS(pyapt.get(ah.url), "html.parser")
     ph = pyapt.createpropertyhandler(ah, propsoup)
     propitem = ph.createproperty()
+    """
     sqlsession.add(propitem)
     sqlsession.commit()
-	  
+    """

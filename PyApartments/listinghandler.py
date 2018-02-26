@@ -6,8 +6,6 @@ import re
 import commons
 import DBHandler
 
-hashproperties = ("address", "city", "name",
-                  "property_id", "state", "zipcode")
 
 class ListingHandler(object):
     __slots__ = ("_id", "accessed", "availability", "bathrooms", "bedrooms",
@@ -24,14 +22,17 @@ class ListingHandler(object):
     def createlisting(self):
         """Returns Listing object for SQLAlchemy."""
         if self._id is None:
-            self._id = commons.makemd5()
+            self.make_id()
         self.accessed = commons.timestamp()
         return DBHandler.Listing(**{key: getattr(self, key, None)
                                     for key in self.__slots__})
 
-    def makemd5(self):
+    def make_id(self):
+        """
         vals = (getattr(self, key, None) for key in hashproperties)                                                   
-        self._id = hashmd5(vals)
+        self._id = commons.hashmd5(vals)
+        """
+        self._id = commons.uuid4()
 
 
 numberpattern = re.compile("[\d,]+")
@@ -46,6 +47,8 @@ def resolvenumbers(text):
                 numberpattern.findall(text.strip())]
     except ValueError:
         return [None]
+    else:
+        return None
 
 
 rentattrs = {"class": "rent"}
@@ -64,11 +67,13 @@ def getrent(tablerowtag):
 
 sqftattrs = {"class": "sqft"}
 def getsqft(tablerowtag):
-    """Returns int number of square feet for listing."""
+    """Returns int number of square feet for listing.
+    If given a range (e.g. '200 - 240'), then it returns the minimum.
+    """
     sqfttag = tablerowtag.find("td", attrs=sqftattrs)
     content = sqfttag.text
     if not content:
-        return [None]
+        return None
     return resolvenumbers(content.strip("Sq Ft"))[0]
 
 

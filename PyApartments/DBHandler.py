@@ -22,7 +22,7 @@ class Property(Base):
     """SQL table to store info on a property manager."""
     __tablename__ = "Property"
     
-    _id = Column(String(32), primary_key=True)
+    _id = Column(String(32), unique=True, primary_key=True)
     name = Column(String, nullable=False)
     rating = Column(Integer, default=None)
     address = Column(String, default=None)
@@ -35,7 +35,7 @@ class Property(Base):
     companykey = Column(String, default=None)
     accessed = Column(DateTime, default=None)
     phone = Column(String, default=None)
-    #description = Column(String, default=None)
+    description = Column(String, default=None)
 
 
     def __repr__(self):
@@ -46,11 +46,11 @@ class Listing(Base):
     """SQL table to store info on a listing."""
     __tablename__ = "Listing"
     
-    _id = Column(String(32), primary_key=True)
+    _id = Column(String(36), unique=True, primary_key=True)
     availability = Column(String)
     rentalkey = Column(String)
     model = Column(String)
-    property_id = Column(String, ForeignKey("Property._id"))
+    property_id = Column(String, ForeignKey("Property._id"), nullable=False)
     accessed = Column(DateTime)
     bathrooms = Column(String)
     bedrooms = Column(Integer) #0 corresponds to a studio apartment
@@ -79,7 +79,7 @@ def createdb(dbname, echo=False):
     #initial data (Compare N-many insertions taking n * log(n) time,
     #where n <= N, to one N * log(N) operation).
     propertytable = Table("Property", metadata,
-                          Column("_id", String(32), uprimary_key=True),
+                          Column("_id", String(32), primary_key=True),
                           Column("name", String, nullable=False),
                           Column("description", String),
                           Column("rating", Integer),
@@ -97,7 +97,7 @@ def createdb(dbname, echo=False):
                           Index("idx_property_id", "_id", unique=True))
     
     listingtable = Table("Listing", metadata,
-                         Column("_id", String(32), primary_key=True),
+                         Column("_id", String(3), primary_key=True),
                          Column("availability", String),
                          Column("rentalkey", String),
                          Column("model", String),
@@ -111,7 +111,7 @@ def createdb(dbname, echo=False):
                          Column("minrent", Integer),
                          Column("maxrent", Integer),
                          Column("sqft", Integer),
-                         Index("idx_listing_id", "_id"))
+                         Index("idx_listing_id", "_id", unique=True))
     metadata.create_all(engine) 
 
 
