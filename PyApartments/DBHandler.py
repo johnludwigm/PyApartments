@@ -22,7 +22,7 @@ class Property(Base):
     """SQL table to store info on a property manager."""
     __tablename__ = "Property"
     
-    _id = Column(String(36), primary_key=True)
+    _id = Column(String(32), primary_key=True)
     name = Column(String, nullable=False)
     rating = Column(Integer, default=None)
     address = Column(String, default=None)
@@ -46,7 +46,7 @@ class Listing(Base):
     """SQL table to store info on a listing."""
     __tablename__ = "Listing"
     
-    _id = Column(String(36), primary_key=True)
+    _id = Column(String(32), primary_key=True)
     availability = Column(String)
     rentalkey = Column(String)
     model = Column(String)
@@ -79,8 +79,9 @@ def createdb(dbname, echo=False):
     #initial data (Compare N-many insertions taking n * log(n) time,
     #where n <= N, to one N * log(N) operation).
     propertytable = Table("Property", metadata,
-                          Column("_id", String(36), primary_key=True),
+                          Column("_id", String(32), uprimary_key=True),
                           Column("name", String, nullable=False),
+                          Column("description", String),
                           Column("rating", Integer),
                           Column("address", String),
                           Column("city", String),
@@ -93,10 +94,10 @@ def createdb(dbname, echo=False):
                           Column("accessed", DateTime),
                           Column("phone", String),
                           Index("idx_propertyname", "name"),
-                          Index("idx_property_id", "_id"))
+                          Index("idx_property_id", "_id", unique=True))
     
     listingtable = Table("Listing", metadata,
-                         Column("_id", String(36), primary_key=True),
+                         Column("_id", String(32), primary_key=True),
                          Column("availability", String),
                          Column("rentalkey", String),
                          Column("model", String),

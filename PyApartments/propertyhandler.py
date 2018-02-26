@@ -4,14 +4,12 @@
 import commons
 import DBHandler
 
+hashproperties = ("address", "city", "name", "state", "zipcode")
+
 class PropertyHandler(object):
     __slots__ = ("_id", "accessed", "address", "city", "companykey",
-                 #"description",
-                 #"fees",
-                 "monthlyfees", "name", "onetimefees",
-                 "phone",
-                 #"rating", Ratings are not accurate or consistentt
-                 "state", "url", "zipcode")
+                 "description", "monthlyfees", "name", "onetimefees",
+                 "phone", "state", "url", "zipcode")
     
 
     def __init__(self, ArticleHandler, propertysoup, _id=None):
@@ -19,17 +17,23 @@ class PropertyHandler(object):
         for key in ArticleHandler.__slots__:
             setattr(self, key, getattr(ArticleHandler, key, None))
         
-        #self.fees = getallfees(propertysoup)
-        #self.description = getpropertydescription(propertysoup)
+        for key, value in getallfees(propertysoup).items():
+            setattr(self, key, value)
+        self.description = getpropertydescription(propertysoup)
         
 
     def createproperty(self):
         """Returns Property object for SQLAlchemy."""
         if self._id is None:
-            self._id = commons.uuid4()
+            self._id = self.makemd5()
         self.accessed = commons.timestamp()
         return DBHandler.Property(**{key: getattr(self, key, None)
                                      for key in self.__slots__})
+
+
+    def makemd5(self):
+        vals = (getattr(self, key, None) for key in hashproperties)                                                   
+        self._id = hashmd5(vals)
 
     
 onetimefeesattrs = {"class": "oneTimeFees"}

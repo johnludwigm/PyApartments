@@ -6,12 +6,12 @@ import re
 import commons
 import DBHandler
 
+hashproperties = ("address", "city", "name",
+                  "property_id", "state", "zipcode")
 
 class ListingHandler(object):
     __slots__ = ("_id", "accessed", "availability", "bathrooms", "bedrooms",
-                 "deposit",
-                 #"fees",
-                 "maxrent", "minrent", "model",
+                 "deposit", "maxrent", "minrent", "model",
                  "rent", "rentalkey", "property_id", "sqft")
 
     def __init__(self, PropertyHandler, tablerowtag):
@@ -24,10 +24,14 @@ class ListingHandler(object):
     def createlisting(self):
         """Returns Listing object for SQLAlchemy."""
         if self._id is None:
-            self._id = commons.uuid4()
+            self._id = commons.makemd5()
         self.accessed = commons.timestamp()
         return DBHandler.Listing(**{key: getattr(self, key, None)
                                     for key in self.__slots__})
+
+    def makemd5(self):
+        vals = (getattr(self, key, None) for key in hashproperties)                                                   
+        self._id = hashmd5(vals)
 
 
 numberpattern = re.compile("[\d,]+")
@@ -65,7 +69,7 @@ def getsqft(tablerowtag):
     content = sqfttag.text
     if not content:
         return [None]
-    return resolvenumbers(content.strip("Sq Ft"))
+    return resolvenumbers(content.strip("Sq Ft"))[0]
 
 
 availableattrs = {"class": "available"}
@@ -130,7 +134,7 @@ def getdata(tablerowtag):
     else:
         returndict["rent"] = None
 
-    returndict["sqft"] = getsqft(tablerowtag)[0]
+    returndict["sqft"] = getsqft(tablerowtag)
     returndict["availability"] = getavailability(tablerowtag)
     returndict["unit"] = getunit(tablerowtag)
     returndict["deposit"] = getdeposit(tablerowtag)
