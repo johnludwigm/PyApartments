@@ -4,7 +4,7 @@
 import commons
 import DBHandler
 
-hashproperties = ("address", "city", "name", "state", "zipcode")
+HASH_PROPERTIES = ("address", "city", "name", "state", "zipcode")
 
 
 class PropertyHandler(object):
@@ -13,17 +13,19 @@ class PropertyHandler(object):
                  "phone", "state", "url", "zipcode")
     
 
-    def __init__(self, ArticleHandler, propertysoup, _id=None):
+    def __init__(self, ArticleHandler, propertysoup, _id=None, Propertyobj=None):
         self._id = _id
+        if Propertyobj is not None:
+            self.loadfromProperty(Propertyobj)
+        else:
+            for key in ArticleHandler.__slots__:
+                setattr(self, key, getattr(ArticleHandler, key, None))
+            for key, value in getallfees(propertysoup).items():
+                setattr(self, key, value)
+            self.description = getpropertydescription(propertysoup)
+            if self._id is None:
+                self.make_id()
 
-        for key in ArticleHandler.__slots__:
-            setattr(self, key, getattr(ArticleHandler, key, None))
-        
-        for key, value in getallfees(propertysoup).items():
-            setattr(self, key, value)
-        self.description = getpropertydescription(propertysoup)
-        if self._id is None:
-            self.make_id()
 
     def createproperty(self):
         """Returns Property object for SQLAlchemy."""
@@ -35,9 +37,16 @@ class PropertyHandler(object):
 
 
     def make_id(self):
-        vals = (getattr(self, key, None) for key in hashproperties)                                                   
+        vals = (getattr(self, key, None) for key in HASH_PROPERTIES)                                                   
         self._id = commons.hashmd5(vals)
 
+
+    def loadfromProperty(self, Property):
+        """Creates PropertyHandler object corresponding to Property object."""
+        propattrs = vars(Property)
+        for key in self.__slots__:
+            setattr(self, key, propattrs.get(key, None))
+        
     
 onetimefeesattrs = {"class": "oneTimeFees"}
 monthlyfeesattrs = {"class": "monthlyFees"}

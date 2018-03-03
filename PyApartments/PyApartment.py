@@ -1,5 +1,6 @@
 import articlehandler
 import commons
+import DBHandler
 import listinghandler
 import LocationHandler
 import propertyhandler
@@ -35,7 +36,12 @@ class PyApartment(object):
             ah = self.createarticlehandler(articletag)
             propertysoup = BS(self.get(ah.url), "html.parser")
             ph = self.createpropertyhandler(ah, propertysoup)
+
+            propquery = self.sqlsession.query(DBHandler.Property).filter(DBHandler.Property._id==ph._id)
+            if propquery.count() > 0:
+                ph.loadfromProperty(propquery.first())         
             self.sqlsession.add(ph.createproperty())
+            
             for tablerowtag in self.gettablerowtags(propertysoup):
                 lh = self.createlistinghandler(ph, tablerowtag)
                 self.sqlsession.add(lh.createlisting())

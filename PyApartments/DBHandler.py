@@ -24,7 +24,7 @@ class Property(Base):
     
     _id = Column(String(32), unique=True, primary_key=True)
     name = Column(String, nullable=False)
-    rating = Column(Integer, default=None)
+    #rating = Column(Integer, default=None)
     address = Column(String, default=None)
     city = Column(String, nullable=False)
     state = Column(String(2), nullable=False)
@@ -82,7 +82,7 @@ def createdb(dbname, echo=False):
                           Column("_id", String(32), primary_key=True),
                           Column("name", String, nullable=False),
                           Column("description", String),
-                          Column("rating", Integer),
+                          #Column("rating", Integer),
                           Column("address", String),
                           Column("city", String),
                           Column("state", String(2), nullable=False),
