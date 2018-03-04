@@ -32,14 +32,19 @@ class PyApartment(object):
     def executesearch(self, zipcode):
         """Executes search, adds resulting Property and Listing objects
         to sqlsession."""
+        properties = set()
         for articletag in self.getarticletags(zipcode):
             ah = self.createarticlehandler(articletag)
             propertysoup = BS(self.get(ah.url), "html.parser")
             ph = self.createpropertyhandler(ah, propertysoup)
-
-            propquery = self.sqlsession.query(DBHandler.Property).filter(DBHandler.Property._id==ph._id)
-            if propquery.count() > 0:
-                ph.loadfromProperty(propquery.first())         
+            
+            #propquery = self.sqlsession.query(DBHandler.Property).filter(DBHandler.Property._id==ph._id)
+            #if propquery.count() > 0:
+            #    ph.loadfromProperty(propquery.first())
+            prop = ph.createproperty()
+            if prop._id in properties:
+                continue
+            properties.add(prop._id) 
             self.sqlsession.add(ph.createproperty())
             
             for tablerowtag in self.gettablerowtags(propertysoup):

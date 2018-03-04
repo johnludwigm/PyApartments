@@ -71,6 +71,8 @@ def getsqft(tablerowtag):
     If given a range (e.g. '200 - 240'), then it returns the minimum.
     """
     sqfttag = tablerowtag.find("td", attrs=sqftattrs)
+    if sqfttag is None:
+        return None
     content = sqfttag.text
     if not content:
         return None
@@ -81,6 +83,8 @@ availableattrs = {"class": "available"}
 def getavailability(tablerowtag):
     """Returns string availability status of listing."""
     availabletag =  tablerowtag.find("td", attrs=availableattrs)
+    if availabletag is None:
+        return None
     return availabletag.text.strip()
 
 
